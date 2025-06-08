@@ -1,14 +1,39 @@
 {
-  "name": "server",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.mjs",
+  "name": "stuff-happens-arena-server",
+  "version": "1.0.0",
+  "description": "Backend API server for Stuff Happens Arena - following qa-server pattern",
+  "type": "module",
+  "main": "server.mjs",
   "scripts": {
+    "dev": "nodemon server.mjs",
+    "start": "node server.mjs",
+    "db:init": "node db/init.mjs",
+    "db:seed": "node db/seed.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "keywords": [
+    "express",
+    "sqlite",
+    "api",
+    "backend",
+    "arena"
+  ],
+  "author": "Luigi De Russis",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.21.2"
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.1",
+    "morgan": "^1.10.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
   }
-}
+} 
