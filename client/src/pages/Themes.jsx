@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, GraduationCap, Heart, MapPin, Dumbbell, Briefcase, Home, Unlock, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Themes = () => {
   const navigate = useNavigate();
   const { isLoggedIn, selectedTheme, selectTheme } = useAuth();
+  const { isDark } = useTheme();
 
   const themes = [
     {
@@ -85,44 +87,58 @@ const Themes = () => {
   };
 
   return (
-    <div className="min-vh-100" style={{backgroundColor: '#1a1a1a'}}>
-      <div className="container py-3">
-        {/* Back to Home */}
-        <div className="row mb-3">
-          <div className="col-12">
-            <button 
-              className="d-flex align-items-center px-4 py-2 shadow-sm"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'white',
-                border: '2px solid white',
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                textDecoration: 'none'
-              }}
-              onClick={() => navigate('/')}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
-                e.currentTarget.style.color = 'black';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'white';
-              }}
-            >
-              <ArrowLeft className="me-2" size={20} />
-              Back to Home
-            </button>
+    <div className="min-vh-100" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+      {/* Fixed Top Header */}
+      <div className="position-fixed w-100" style={{top: 0, left: 0, zIndex: 1050, backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)'}}>
+        <div className="container-fluid py-2">
+          <div className="row align-items-center">
+            <div className="col-md-2">
+              <button 
+                className="d-flex align-items-center px-3 py-1 shadow-sm"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: isDark ? 'white' : '#1a1a1a',
+                  border: isDark ? '1px solid white' : '1px solid #1a1a1a',
+                  borderRadius: '20px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textDecoration: 'none',
+                  fontSize: '14px'
+                }}
+                onClick={() => navigate('/')}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'white' : '#1a1a1a';
+                  e.currentTarget.style.color = isDark ? 'black' : 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = isDark ? 'white' : '#1a1a1a';
+                }}
+              >
+                <ArrowLeft className="me-1" size={16} />
+                Back to Home
+              </button>
+            </div>
+            
+            <div className="col-md-8 text-center">
+              <h4 className="mb-0" style={{color: isDark ? 'white' : '#1a1a1a', fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '18px'}}>Choose Your Theme</h4>
+            </div>
+            
+            <div className="col-md-2"></div>
           </div>
         </div>
+      </div>
+      
+      {/* Content with top padding to account for fixed header */}
+      <div style={{paddingTop: '80px'}}>
+        <div className="container py-3">
 
         <div className="row">
           <div className="col-12 text-center mb-3">
-            <h1 className="display-5 fw-bold mb-2" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '2.5rem'}}>Choose Your Disaster Domain</h1>
-            <p className="mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.8)', fontSize: '16px'}}>
+            <h1 className="display-5 fw-bold mb-2" style={{color: isDark ? 'white' : '#1a1a1a', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '2.5rem'}}>Choose Your Disaster Domain</h1>
+            <p className="mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,26,0.8)', fontSize: '16px'}}>
               Each theme brings its own unique collection of horrible situations.
             </p>
             {!isLoggedIn && (
@@ -158,15 +174,15 @@ const Themes = () => {
         {selectedTheme && (
           <div className="row mb-3">
             <div className="col-12">
-              <div className="card border-0 shadow-lg" style={{backgroundColor: '#1a1a1a', borderRadius: '20px'}}>
+              <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderRadius: '20px'}}>
                 <div className="card-body p-3 text-center">
-                  <h3 className="mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: 'white', fontSize: '1.5rem'}}>
+                  <h3 className="mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: isDark ? 'white' : '#1a1a1a', fontSize: '1.5rem'}}>
                     Ready to Face the {themes.find(t => t.id === selectedTheme)?.name} Disasters?
                   </h3>
-                  <p className="mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.8)', fontSize: '14px'}}>
+                  <p className="mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,26,0.8)', fontSize: '14px'}}>
                     {themes.find(t => t.id === selectedTheme)?.description}
                   </p>
-                  <div className="d-flex justify-content-center gap-3">
+                  <div className="d-flex justify-content-center">
                     <button 
                       className="btn btn-lg px-5 py-3" 
                       style={{
@@ -195,37 +211,6 @@ const Themes = () => {
                     >
                       Start Playing
                     </button>
-
-                    {!isLoggedIn && (
-                      <button 
-                        className="btn btn-lg px-5 py-3" 
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: 'white',
-                          border: '2px solid white',
-                          borderRadius: '50px',
-                          fontFamily: 'Poppins, sans-serif',
-                          fontWeight: '600',
-                          fontSize: '16px',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onClick={() => navigate('/demo')}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'white';
-                          e.currentTarget.style.color = 'black';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 255, 255, 0.2)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = 'white';
-                          e.currentTarget.style.transform = 'translateY(0px)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        Try Demo First
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -350,6 +335,7 @@ const Themes = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

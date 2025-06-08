@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Timer, AlertTriangle, Clock, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Game = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
+  const { isDark } = useTheme();
   const [gameState, setGameState] = useState({
     cardsWon: 0,
     wrongGuesses: 0,
@@ -75,98 +77,101 @@ const Game = () => {
   };
 
   return (
-    <div className="min-vh-100" style={{backgroundColor: '#1a1a1a'}}>
-      {/* Header */}
-      <div className="border-bottom" style={{backgroundColor: '#2a2a2a', borderColor: 'rgba(255,255,255,0.1)'}}>
-        <div className="container-fluid py-3">
+    <div className="min-vh-100" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+      {/* Fixed Top Header */}
+      <div className="position-fixed w-100" style={{top: 0, left: 0, zIndex: 1050, backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)'}}>
+        <div className="container-fluid py-2">
           <div className="row align-items-center">
-            <div className="col-md-3">
+            <div className="col-md-2">
               <button 
-                className="d-flex align-items-center px-4 py-2 shadow-sm"
+                className="d-flex align-items-center px-3 py-1 shadow-sm"
                 style={{
                   backgroundColor: 'transparent',
-                  color: 'white',
-                  border: '2px solid white',
-                  borderRadius: '25px',
+                  color: isDark ? 'white' : '#1a1a1a',
+                  border: isDark ? '1px solid white' : '1px solid #1a1a1a',
+                  borderRadius: '20px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '500',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  fontSize: '14px'
                 }}
                 onClick={() => navigate('/')}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.color = 'black';
+                  e.currentTarget.style.backgroundColor = isDark ? 'white' : '#1a1a1a';
+                  e.currentTarget.style.color = isDark ? 'black' : 'white';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.color = isDark ? 'white' : '#1a1a1a';
                 }}
               >
-                <ArrowLeft className="me-2" size={24} />
+                <ArrowLeft className="me-1" size={16} />
                 Exit Game
               </button>
             </div>
             
-            <div className="col-md-6 text-center">
+            <div className="col-md-8 text-center">
               <div className="row">
                 <div className="col-4">
-                  <div style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}} className="fw-bold">{gameState.cardsWon}/6</div>
-                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.7)'}}>Cards Won</div>
+                  <div style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">{gameState.cardsWon}/6</div>
+                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Cards Won</div>
                 </div>
                 <div className="col-4">
-                  <div className="text-danger fw-bold" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.wrongGuesses}/3</div>
-                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.7)'}}>Wrong Guesses</div>
+                  <div className="text-danger fw-bold" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}}>{gameState.wrongGuesses}/3</div>
+                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Wrong Guesses</div>
                 </div>
                 <div className="col-4">
-                  <div style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}} className="fw-bold">Round {gameState.round}</div>
-                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.7)'}}>Current Round</div>
+                  <div style={{color: isDark ? 'white' : '#1a1a1a', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">Round {gameState.round}</div>
+                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Current Round</div>
                 </div>
               </div>
             </div>
             
-            <div className="col-md-3 text-end">
+            <div className="col-md-2 text-end">
               {isLoggedIn && (
                 <button 
-                  className="btn d-flex align-items-center justify-content-end p-0 border-0 bg-transparent"
+                  className="btn d-flex align-items-center justify-content-end p-1 border-0 bg-transparent"
                   onClick={() => navigate('/profile')}
-                  style={{color: 'white', fontWeight: '500', fontFamily: 'Poppins, sans-serif'}}
+                  style={{color: isDark ? 'white' : '#1a1a1a', fontWeight: '500', fontFamily: 'Poppins, sans-serif', fontSize: '14px'}}
                 >
-                  <User size={20} className="me-2" style={{color: 'white'}} />
-                  Student Player
+                  <User size={16} className="me-1" style={{color: isDark ? 'white' : '#1a1a1a'}} />
+                  Profile
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      <div className="container py-4">
+      
+      {/* Content with top padding to account for fixed header */}
+      <div style={{paddingTop: '80px'}}>
+        <div className="container py-4">
         {/* Current Question */}
         <div className="row mb-4">
           <div className="col-12">
-            <div className="card border-0 shadow-lg" style={{backgroundColor: '#2a2a2a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px'}}>
+                          <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#4A90E2' : '#4A90E2', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px'}}>
               <div className="card-body p-5">
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
-                    <Target className="me-3" style={{color: '#4A90E2'}} size={36} />
-                    <h4 className="mb-0" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Where does this disaster belong?</h4>
+                                          <Target className="me-3" style={{color: 'white'}} size={36} />
+                      <h4 className="mb-0" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Where does this disaster belong?</h4>
                   </div>
                   <div className="d-flex align-items-center">
-                    <Timer className="me-2" style={{color: '#4A90E2'}} size={24} />
-                    <span className="fw-bold" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.timeLeft}s</span>
-                    <div className="progress ms-3" style={{width: '100px', height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.2)'}}>
-                      <div 
-                        className="progress-bar" 
-                        style={{backgroundColor: '#4A90E2', width: `${(gameState.timeLeft / 30) * 100}%`, borderRadius: '4px'}}
-                      ></div>
-                    </div>
+                                          <Timer className="me-2" style={{color: 'white'}} size={24} />
+                      <span className="fw-bold" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.timeLeft}s</span>
+                      <div className="progress ms-3" style={{width: '100px', height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.2)'}}>
+                        <div 
+                          className="progress-bar" 
+                          style={{backgroundColor: 'white', width: `${(gameState.timeLeft / 30) * 100}%`, borderRadius: '4px'}}
+                        ></div>
+                      </div>
                   </div>
                 </div>
                 
                 <div className="text-center">
-                  <div className="card d-inline-block shadow-sm" style={{maxWidth: '300px', borderRadius: '20px', overflow: 'hidden', backgroundColor: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)'}}>
+                                      <div className="card d-inline-block shadow-sm" style={{maxWidth: '300px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
                     <img 
                       src={currentCard.image} 
                       className="card-img-top"
@@ -199,16 +204,16 @@ const Game = () => {
                   minHeight: '200px', 
                   cursor: 'pointer',
                   borderStyle: 'dashed',
-                  borderColor: selectedSlot === 0 ? '#4A90E2' : 'rgba(255,255,255,0.3)',
-                  backgroundColor: selectedSlot === 0 ? 'rgba(74, 144, 226, 0.1)' : 'transparent',
+                                     borderColor: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
+                   backgroundColor: selectedSlot === 0 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
                   borderRadius: '16px'
                 }}
                 onClick={() => handleSlotClick(0)}
               >
                 <div className="d-flex align-items-center justify-content-center h-100">
                   <div>
-                    <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(255,255,255,0.6)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
-                    <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(255,255,255,0.6)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
+                                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
+                      <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
                   </div>
                 </div>
               </div>
@@ -216,7 +221,7 @@ const Game = () => {
               {/* Disaster cards with placement slots between them */}
               {disasterCards.map((card, index) => (
                 <React.Fragment key={card.id}>
-                  <div className="card shadow-sm" style={{minWidth: '200px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#2a2a2a', border: '1px solid rgba(255,255,255,0.1)'}}>
+                                      <div className="card shadow-sm" style={{minWidth: '200px', borderRadius: '16px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
                     <img 
                       src={card.image} 
                       className="card-img-top"
@@ -242,16 +247,16 @@ const Game = () => {
                       minHeight: '200px', 
                       cursor: 'pointer',
                       borderStyle: 'dashed',
-                      borderColor: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(255,255,255,0.3)',
-                      backgroundColor: selectedSlot === index + 1 ? 'rgba(74, 144, 226, 0.1)' : 'transparent',
+                                              borderColor: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
+                        backgroundColor: selectedSlot === index + 1 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
                       borderRadius: '16px'
                     }}
                     onClick={() => handleSlotClick(index + 1)}
                   >
                     <div className="d-flex align-items-center justify-content-center h-100">
                       <div>
-                        <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(255,255,255,0.6)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
-                        <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(255,255,255,0.6)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
+                                                  <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
+                          <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
                       </div>
                     </div>
                   </div>
@@ -288,7 +293,7 @@ const Game = () => {
         {/* Game Instructions */}
         <div className="row mt-4">
           <div className="col-12">
-            <div className="card border-0 shadow-sm" style={{backgroundColor: '#2a2a2a', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)'}}>
+                          <div className="card border-0 shadow-sm" style={{backgroundColor: isDark ? '#2563eb' : '#3b82f6', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)'}}>
               <div className="card-body p-4">
                 <div className="text-center" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.8)'}}>
                   <strong style={{fontWeight: '600'}}>How to play:</strong> Click on a "Place Here" slot where you think this disaster belongs based on severity. 
@@ -297,6 +302,7 @@ const Game = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Timer, Trophy, BookOpen, Play, Users, Zap } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const GameFeaturesSection = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const { isLoggedIn } = useAuth();
   
   const features = [
     {
@@ -82,62 +84,65 @@ const GameFeaturesSection = () => {
                   Join thousands of students who've discovered just how chaotic university life can really get.
                 </p>
                 <div className="d-flex justify-content-center gap-3">
-                  <button 
-                    className="btn btn-lg px-5 py-3" 
-                    style={{
-                      backgroundColor: '#4A90E2',
-                      color: 'white',
-                      border: '2px solid #4A90E2',
-                      borderRadius: '50px',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontWeight: '600',
-                      fontSize: '18px',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onClick={() => navigate('/themes')}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                      e.currentTarget.style.color = '#4A90E2';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(74, 144, 226, 0.3)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#4A90E2';
-                      e.currentTarget.style.color = 'white';
-                      e.currentTarget.style.transform = 'translateY(0px)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    Start Playing
-                  </button>
-                  <button 
-                    className="btn btn-lg px-5 py-3" 
-                    style={{
-                      backgroundColor: 'transparent',
-                      color: isDark ? 'white' : '#1a1a1a',
-                      border: isDark ? '2px solid white' : '2px solid #1a1a1a',
-                      borderRadius: '50px',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontWeight: '600',
-                      fontSize: '18px',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onClick={() => navigate('/themes')}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? 'white' : '#1a1a1a';
-                      e.currentTarget.style.color = isDark ? 'black' : 'white';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = isDark ? '0 8px 25px rgba(255, 255, 255, 0.2)' : '0 8px 25px rgba(26, 26, 26, 0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = isDark ? 'white' : '#1a1a1a';
-                      e.currentTarget.style.transform = 'translateY(0px)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    Try Demo
-                  </button>
+                  {isLoggedIn ? (
+                    <button 
+                      className="btn btn-lg px-5 py-3" 
+                      style={{
+                        backgroundColor: '#4A90E2',
+                        color: 'white',
+                        border: '2px solid #4A90E2',
+                        borderRadius: '50px',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontWeight: '600',
+                        fontSize: '18px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onClick={() => navigate('/themes')}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.color = '#4A90E2';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(74, 144, 226, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#4A90E2';
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.transform = 'translateY(0px)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      Start Playing
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-lg px-5 py-3" 
+                      style={{
+                        backgroundColor: '#4A90E2',
+                        color: 'white',
+                        border: '2px solid #4A90E2',
+                        borderRadius: '50px',
+                        fontFamily: 'Poppins, sans-serif',
+                        fontWeight: '600',
+                        fontSize: '18px',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onClick={() => navigate('/themes')}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.color = '#4A90E2';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(74, 144, 226, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#4A90E2';
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.transform = 'translateY(0px)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      Try Demo
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
