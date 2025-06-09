@@ -59,10 +59,29 @@ const isLoggedIn = (req, res, next) => {
   return res.status(401).json({error: 'Not authorized'});
 }
 
+// Helper function to check authentication status with more details
+const checkAuth = (req) => {
+  return {
+    isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+    user: req.user || null,
+    sessionID: req.sessionID || null
+  };
+}
+
+// Helper function to determine if request is for demo
+const isDemoRequest = (sessionId) => {
+  return sessionId === 'demo';
+}
+
 app.use(session({
   secret: "shhhhh... it's a secret!",
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 app.use(passport.authenticate('session'));
 
@@ -265,15 +284,32 @@ app.get('/api/games/:id/players', async (req, res) => {
 
 // POST /api/sessions
 app.post('/api/sessions', passport.authenticate('local'), function(req, res) {
-  return res.status(201).json(req.user);
+  return res.status(201).json({
+    user: req.user,
+    sessionId: req.sessionID,
+    authenticated: true,
+    message: 'Login successful'
+  });
 });
 
-// GET /api/sessions/current
-app.get('/api/sessions/current', (req, res) => {
-  if(req.isAuthenticated()) {
-    res.json(req.user);}
-  else
-    res.status(401).json({error: 'Not authenticated'});
+// GET /api/sessions/current - Check current authentication status
+app.get('/api/sessions/current', function(req, res) {
+  const authStatus = checkAuth(req);
+  if (authStatus.isAuthenticated) {
+    res.json({
+      authenticated: true,
+      user: authStatus.user,
+      sessionId: authStatus.sessionID
+    });
+  } else {
+    res.json({
+      authenticated: false,
+      user: null,
+      sessionId: null,
+      demo_available: true,
+      demo_theme: 'university'
+    });
+  }
 });
 
 // DELETE /api/session/current
@@ -438,31 +474,17 @@ app.post('/api/game-sessions', async (req, res) => {
       });
     }
 
-    // For anonymous users (demo), only allow university theme
-    if (!req.isAuthenticated()) {
-      if (theme_key !== 'university') {
-        return res.status(403).json({
-          error: 'Anonymous users can only play University Life theme as demo.',
-          allowed_theme: 'university'
-        });
-      }
-      
-      // Demo mode: 3 starting cards sorted by severity
-      const randomCards = await getRandomThemeCards(theme.id, 3);
-      const startingCards = randomCards.sort((a, b) => a.bad_luck_severity - b.bad_luck_severity);
-      
-      return res.json({
-        theme: theme,
-        cards: startingCards,
-        demo: true,
-        max_rounds: 1,
-        starting_hand: true,
-        message: 'Demo game: 1 round only. Register to play full games!'
+    // Create game session for both logged-in and anonymous users
+    const userId = req.isAuthenticated() ? req.user.id : null;
+    const sessionId = await createGameSession(userId, theme.id);
+    
+    // For anonymous users, only allow university theme
+    if (!req.isAuthenticated() && theme_key !== 'university') {
+      return res.status(403).json({
+        error: 'Anonymous users can only play University Life theme as demo.',
+        allowed_theme: 'university'
       });
     }
-
-    // For logged-in users, create actual game session
-    const sessionId = await createGameSession(req.user.id, theme.id);
     
     // Get 3 random starting cards and sort by severity (low to high)
     const randomCards = await getRandomThemeCards(theme.id, 3);
@@ -482,20 +504,26 @@ app.post('/api/game-sessions', async (req, res) => {
       await addGameRound(sessionId, roundData);
     }
     
+    const isDemo = !req.isAuthenticated();
+    
     res.status(201).json({
       session_id: sessionId,
       theme: theme,
       cards: startingCards,
-      demo: false,
-      max_rounds: 6,
+      demo: isDemo,
+      max_rounds: isDemo ? 1 : 6,
       starting_hand: true,
-      message: "Game started! These 3 cards are your starting hand, ordered by severity."
+      message: isDemo 
+        ? "Demo game: 1 round only. Register to play full games!"
+        : "Game started! These 3 cards are your starting hand, ordered by severity."
     });
   } catch(e) {
     console.error(`ERROR: ${e.message}`);
     res.status(500).json({error: 'Error creating game session'});
   }
 });
+
+
 
 // GET /api/game-sessions/active
 app.get('/api/game-sessions/active', isLoggedIn, async (req, res) => {
@@ -513,12 +541,18 @@ app.get('/api/game-sessions/active', isLoggedIn, async (req, res) => {
 });
 
 // GET /api/game-sessions/:id
-app.get('/api/game-sessions/:id', isLoggedIn, async (req, res) => {
+app.get('/api/game-sessions/:id', async (req, res) => {
   try {
     const session = await getGameSession(req.params.id);
     if(session.error) {
       res.status(404).json(session);
     } else {
+      // For security: only allow access to own sessions for logged-in users
+      // Demo sessions (user_id = null) can be accessed by anyone
+      if (session.user_id !== null && (!req.isAuthenticated() || req.user.id !== session.user_id)) {
+        return res.status(403).json({error: 'Access denied: not your session'});
+      }
+      
       res.json(session);
     }
   } catch(e) {
@@ -528,11 +562,17 @@ app.get('/api/game-sessions/:id', isLoggedIn, async (req, res) => {
 });
 
 // GET /api/game-sessions/:id/rounds - Get all rounds for a game session
-app.get('/api/game-sessions/:id/rounds', isLoggedIn, async (req, res) => {
+app.get('/api/game-sessions/:id/rounds', async (req, res) => {
   try {
     const session = await getGameSession(req.params.id);
     if(session.error) {
       return res.status(404).json(session);
+    }
+    
+    // For security: only allow access to own sessions for logged-in users
+    // Demo sessions (user_id = null) can be accessed by anyone
+    if (session.user_id !== null && (!req.isAuthenticated() || req.user.id !== session.user_id)) {
+      return res.status(403).json({error: 'Access denied: not your session'});
     }
     
     // Get all rounds for this session
@@ -545,15 +585,20 @@ app.get('/api/game-sessions/:id/rounds', isLoggedIn, async (req, res) => {
 });
 
 // GET /api/game-sessions/:id/next-card - Get random card for current round
-app.get('/api/game-sessions/:id/next-card', isLoggedIn, async (req, res) => {
+app.get('/api/game-sessions/:id/next-card', async (req, res) => {
   try {
-    const session = await getGameSession(req.params.id);
+    const sessionId = req.params.id;
+    const authStatus = checkAuth(req);
+    
+    console.log(`[NEXT-CARD] SessionId: ${sessionId}, Authenticated: ${authStatus.isAuthenticated}, User: ${authStatus.user?.id || 'none'}`);
+    
+    const session = await getGameSession(sessionId);
     if(session.error) {
       return res.status(404).json(session);
     }
     
     // Get already used cards to exclude them
-    const existingRounds = await getGameRounds(req.params.id);
+    const existingRounds = await getGameRounds(sessionId);
     const usedCardIds = existingRounds.map(r => r.card_id);
     
     // Get a random card from the theme that hasn't been used
@@ -574,7 +619,8 @@ app.get('/api/game-sessions/:id/next-card', isLoggedIn, async (req, res) => {
       title: nextCard.title,
       description: nextCard.description,
       image_url: nextCard.image_url,
-      theme_id: nextCard.theme_id
+      theme_id: nextCard.theme_id,
+      demo: session.user_id === null // Mark as demo if no user
       // Note: bad_luck_severity is NOT included - that's revealed after guess
     });
   } catch(e) {
@@ -599,11 +645,12 @@ app.put('/api/game-sessions/:id', isLoggedIn, async (req, res) => {
 });
 
 // POST /api/game-sessions/:id/rounds
-app.post('/api/game-sessions/:id/rounds', isLoggedIn, [
+app.post('/api/game-sessions/:id/rounds', [
   check('round_number').isNumeric(),
   check('card_id').isNumeric(),
   check('user_choice_position').isNumeric(),
-  check('time_taken').optional().isNumeric()
+  check('time_taken').optional().isNumeric(),
+  check('starting_cards').optional().isArray() // For demo mode
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -612,13 +659,30 @@ app.post('/api/game-sessions/:id/rounds', isLoggedIn, [
 
   try {
     const sessionId = req.params.id;
+    const authStatus = checkAuth(req);
     const { round_number, card_id, user_choice_position, time_taken } = req.body;
+    
+    console.log(`[ROUNDS] SessionId: ${sessionId}, Authenticated: ${authStatus.isAuthenticated}, User: ${authStatus.user?.id || 'none'}`);
     
     // Get the game session
     const session = await getGameSession(sessionId);
     if (session.error) {
       return res.status(404).json({error: 'Game session not found'});
     }
+    
+    // For anonymous users (demo), enforce 1-round limitation
+    if (!authStatus.isAuthenticated) {
+      const existingRounds = await getGameRounds(sessionId);
+      const gameplayRounds = existingRounds.filter(r => r.round_number > 0);
+      
+      if (gameplayRounds.length >= 1) {
+        return res.status(403).json({
+          error: 'Demo users can only play 1 round. Register to play full games!',
+          demo: true,
+          rounds_played: gameplayRounds.length
+        });
+      }
+         }
     
     // Check if game is already completed
     if (session.status === 'completed') {
@@ -702,6 +766,8 @@ app.post('/api/game-sessions/:id/rounds', isLoggedIn, [
     
     // Check game end conditions
     let gameStatus = 'continue';
+    const isDemo = session.user_id === null;
+    
     if (updates.cards_won >= 3) {  // Win with 3 won cards (+ 3 starting = 6 total)
       gameStatus = 'won';
       // Update database to mark game as completed
@@ -718,6 +784,14 @@ app.post('/api/game-sessions/:id/rounds', isLoggedIn, [
         game_result: 'lost',
         time_finished: new Date().toISOString()
       });
+    } else if (isDemo) {
+      // Demo users: end game after 1 round regardless of outcome
+      gameStatus = isCorrect ? 'demo_success' : 'demo_failed';
+      await updateGameSession(sessionId, {
+        status: 'completed',
+        game_result: gameStatus,
+        time_finished: new Date().toISOString()
+      });
     }
     
     // Prepare response with timeout info
@@ -728,13 +802,23 @@ app.post('/api/game-sessions/:id/rounds', isLoggedIn, [
       points_earned: pointsEarned,
       card_revealed: newCard,
       game_status: gameStatus,
-      session_updates: updates
+      session_updates: updates,
+      demo: isDemo
     };
+    
+    // Add demo-specific messaging
+    if (isDemo) {
+      response.message = isCorrect 
+        ? `Correct! The card belonged in position ${correctPosition}. Register to play full games!`
+        : `Wrong! The card belonged in position ${correctPosition}, not ${user_choice_position}. Register to play full games!`;
+    }
     
     // Add timeout penalty information if applicable
     if (timeoutPenalty) {
       response.timeout_penalty = true;
-      response.message = "Time's up! Answers over 30 seconds are considered incorrect.";
+      response.message = isDemo 
+        ? `Time's up! Answers over 30 seconds are considered incorrect. The card belonged in position ${correctPosition}. Register to play full games!`
+        : "Time's up! Answers over 30 seconds are considered incorrect.";
       response.time_limit_exceeded = time_taken;
     }
     
