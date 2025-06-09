@@ -50,12 +50,32 @@ export const getUserByUsername = (username) => {
 // add a new user
 export const addUser = (user) => {
   return new Promise((resolve, reject) => {
-    const sql = 'INSERT INTO users(username, email, password_hash, avatar_url, role) VALUES (?,?,?,?,?)';
-    db.run(sql, [user.username, user.email, user.password_hash, user.avatar_url, user.role || 'user'], function(err) {
-      if (err)
+    // Generate salt and hash password
+    const salt = crypto.randomBytes(16).toString('hex');
+    
+    crypto.scrypt(user.password, salt, 16, (err, hashedPassword) => {
+      if (err) {
         reject(err);
-      else 
-        resolve(this.lastID);
+        return;
+      }
+      
+      const sql = 'INSERT INTO users(username, email, password_hash, salt, name, university, major, avatar_url, role) VALUES (?,?,?,?,?,?,?,?,?)';
+      db.run(sql, [
+        user.username, 
+        user.email, 
+        hashedPassword.toString('hex'),
+        salt,
+        user.name || null,
+        user.university || null,
+        user.major || null,
+        user.avatar_url || null, 
+        user.role || 'user'
+      ], function(err) {
+        if (err)
+          reject(err);
+        else 
+          resolve(this.lastID);
+      });
     });
   });
 }
@@ -63,8 +83,16 @@ export const addUser = (user) => {
 // update user
 export const updateUser = (userId, user) => {
   return new Promise((resolve, reject) => {
-    const sql = 'UPDATE users SET username = ?, email = ?, avatar_url = ?, updated_at = ? WHERE id = ?';
-    db.run(sql, [user.username, user.email, user.avatar_url, new Date().toISOString(), userId], function(err) {
+    const sql = 'UPDATE users SET username = ?, email = ?, name = ?, university = ?, major = ?, avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    db.run(sql, [
+      user.username, 
+      user.email, 
+      user.name || null,
+      user.university || null,
+      user.major || null,
+      user.avatar_url || null, 
+      userId
+    ], function(err) {
       if (err)
         reject(err);
       else
@@ -143,7 +171,7 @@ export const emailExists = (email) => {
 // get user with profile
 export const getUserWithProfile = (userId) => {
   return new Promise((resolve, reject) => {
-    const sql = `SELECT u.*, p.bio, p.total_games, p.total_wins, p.total_points, p.ranking
+    const sql = `SELECT u.*, p.bio
                  FROM users u
                  LEFT JOIN user_profiles p ON u.id = p.user_id
                  WHERE u.id = ?`;
@@ -154,20 +182,17 @@ export const getUserWithProfile = (userId) => {
         resolve({error: 'User not found'});
       } else {
         resolve({
-          user: {
-            id: row.id,
-            username: row.username,
-            email: row.email,
-            avatar_url: row.avatar_url,
-            role: row.role,
-            created_at: row.created_at
-          },
+          id: row.id,
+          username: row.username,
+          email: row.email,
+          name: row.name,
+          university: row.university,
+          major: row.major,
+          avatar_url: row.avatar_url,
+          role: row.role,
+          created_at: row.created_at,
           profile: {
-            bio: row.bio,
-            total_games: row.total_games || 0,
-            total_wins: row.total_wins || 0,
-            total_points: row.total_points || 0,
-            ranking: row.ranking || 0
+            bio: row.bio
           }
         });
       }

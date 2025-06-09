@@ -1,0 +1,195 @@
+# REAL GAME FLOW - CORRECTED
+# This demonstrates the actual gameplay using proper endpoints
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+
+
+
+###############################################
+# RESET DATABASE (Run this before each test cycle)
+###############################################
+
+### RESET - Clear all game data (keeps users and themes)
+DELETE {{baseUrl}}/api/admin/reset-games
+
+### RESET - Clear all user data (nuclear option)
+DELETE {{baseUrl}}/api/admin/reset-all
+
+### RESET - Fix duplicate cards (keeps only 50 per theme)
+DELETE {{baseUrl}}/api/admin/reset-cards
+
+### RESET - Check current game sessions status
+GET {{baseUrl}}/api/admin/status
+
+
+###############################################
+# REAL WINNING GAME - STEP BY STEP
+###############################################
+
+### Step 1: Login first
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{"username":"hooman","password":"password123"}
+
+### Step 2: Start new game (University theme)
+POST http://localhost:3001/api/game-sessions
+Content-Type: application/json
+
+{"theme_key":"university"}
+
+
+# Copy your actual session_id from the response above and replace in URLs below
+# Example: If session_id is 5, replace SESSION_ID with 5
+
+###############################################
+# ROUND 1
+###############################################
+
+
+@SESSION_ID = 4
+
+### Step 3a: Get random card for Round 1
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+# Copy the card "id" from the response above and use it below
+
+### Step 3b: Submit your guess for Round 1
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 2,
+  "card_id":1 ,
+  "user_choice_position": 5,
+  "time_taken": 34
+}
+
+### CHECK CURRENT SITUATION - See all cards played so far
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+### Step 9: Check final game status (should show "won" with 6 cards collected)
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}
+
+###############################################
+# ROUND 2
+###############################################
+
+### Step 4a: Get random card for Round 2
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+### Step 4b: Submit your guess for Round 2
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+  {
+    "round_number": 2,
+    "card_id": 40,
+    "user_choice_position": 4,
+    "time_taken": 6
+  }
+
+### CHECK CURRENT SITUATION - See all cards played so far
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+###############################################
+# ROUND 3
+###############################################
+
+### Step 5a: Get random card for Round 3
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+### Step 5b: Submit your guess for Round 3
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 3,
+  "card_id": 1,
+  "user_choice_position": 6,
+  "time_taken": 4
+}
+
+###############################################
+# ROUND 4
+###############################################
+
+### Step 6a: Get random card for Round 4
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+### Step 6b: Submit your guess for Round 4
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 4,
+  "card_id": CARD_ID_FROM_STEP_6A,
+  "user_choice_position": YOUR_GUESS_HERE,
+  "time_taken": 7
+}
+
+###############################################
+# ROUND 5
+###############################################
+
+### Step 7a: Get random card for Round 5
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+### Step 7b: Submit your guess for Round 5
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 5,
+  "card_id": CARD_ID_FROM_STEP_7A,
+  "user_choice_position": YOUR_GUESS_HERE,
+  "time_taken": 3
+}
+
+###############################################
+# ROUND 6 (FINAL ROUND TO WIN)
+###############################################
+
+### Step 8a: Get random card for Round 6
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}/next-card
+Content-Type: application/json
+
+### Step 8b: Submit your guess for Round 6
+POST http://localhost:3001/api/game-sessions/{{SESSION_ID}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 6,
+  "card_id": CARD_ID_FROM_STEP_8A,
+  "user_choice_position": YOUR_GUESS_HERE,
+  "time_taken": 8
+}
+
+### Step 9: Check final game status (should show "won" with 6 cards collected)
+GET http://localhost:3001/api/game-sessions/{{SESSION_ID}}
+
+###############################################
+# HOW TO PLAY:
+# 1. Run Steps 1-2 to login and start game
+# 2. Note your starting hand cards and their severities
+# 3. For each round:
+#    a) Run the "next-card" request to get a random card
+#    b) Look at the card title/description (NO severity shown)
+#    c) Guess where it fits among your current cards
+#    d) Submit your guess with the card ID from step (a)
+#    e) Server reveals if you're right and shows the severity
+# 4. Win by getting 6 rounds correct!
+#
+# POSITIONS: If you have cards [A, B, C], positions are:
+# Position 1: Before A
+# Position 2: Between A and B  
+# Position 3: Between B and C
+# Position 4: After C
+###############################################
