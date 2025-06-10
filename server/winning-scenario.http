@@ -4,6 +4,18 @@
 @baseUrl = http://localhost:3001
 @contentType = application/json
 
+### Register test user
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+
+{
+  "username": "game_tester",
+  "email": "tester@game.com",
+  "password": "password123",
+  "name": "Game Tester",
+  "university": "Test University",
+  "major": "Game Testing"
+}
 
 
 ###############################################

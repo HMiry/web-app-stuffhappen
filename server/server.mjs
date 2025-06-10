@@ -38,8 +38,8 @@ app.use(cors(corsOptions));
 
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
   const user = await authenticateUser(username, password);
-  if(!user)
-    return cb(null, false, 'Incorrect username or password.');
+  if(!user || user.error)
+    return cb(null, false, user?.message || 'Authentication failed');
     
   return cb(null, user);
 }));
@@ -283,13 +283,26 @@ app.get('/api/games/:id/players', async (req, res) => {
 });
 
 // POST /api/sessions
-app.post('/api/sessions', passport.authenticate('local'), function(req, res) {
-  return res.status(201).json({
-    user: req.user,
-    sessionId: req.sessionID,
-    authenticated: true,
-    message: 'Login successful'
-  });
+app.post('/api/sessions', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    if (!user) {
+      return res.status(401).json({ error: info || 'Authentication failed' });
+    }
+    req.logIn(user, function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Login session error' });
+      }
+      return res.status(201).json({
+        user: req.user,
+        sessionId: req.sessionID,
+        authenticated: true,
+        message: 'Login successful'
+      });
+    });
+  })(req, res, next);
 });
 
 // GET /api/sessions/current - Check current authentication status
