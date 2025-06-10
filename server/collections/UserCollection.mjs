@@ -123,15 +123,15 @@ export const authenticateUser = (username, password) => {
         reject(err); 
       }
       else if (row === undefined) { 
-        resolve(false); 
+        resolve({ error: 'USER_NOT_FOUND', message: 'User not found' });
       }
       else {
-        const user = {id: row.id, username: row.username, email: row.email};
+        const user = {id: row.id, username: row.username, email: row.email, name: row.name};
         
         crypto.scrypt(password, row.salt, 16, function(err, hashedPassword) {
           if (err) reject(err);
           if(!crypto.timingSafeEqual(Buffer.from(row.password_hash, 'hex'), hashedPassword))
-            resolve(false);
+            resolve({ error: 'WRONG_PASSWORD', message: 'Incorrect password' });
           else
             resolve(user);
         });
