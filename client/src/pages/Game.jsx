@@ -1,83 +1,305 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Target, Timer, AlertTriangle, Clock, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import API from '../services/api.mjs';
 
 const Game = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, user } = useAuth();
   const { isDark } = useTheme();
+  // Get game session from navigation state
+  const gameSession = location.state?.gameSession;
+  
   const [gameState, setGameState] = useState({
+    sessionId: gameSession?.session_id,
     cardsWon: 0,
     wrongGuesses: 0,
     round: 1,
     timeLeft: 30,
-    gameStarted: true
+    gameStarted: false,
+    loading: true,
+    isCompleted: false // Add this to track if game is completed
   });
 
-  const [currentCard] = useState({
-    title: "Missed your graduation ceremony",
-    image: "/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg",
-    id: 'current'
-  });
-
-  const [disasterCards] = useState([
-    {
-      id: 1,
-      title: "Got food poisoning during finals week",
-      image: "/images/freepik__the-style-is-candid-image-photography-with-natural__62683.jpeg",
-      severity: 40.5
-    },
-    {
-      id: 2,
-      title: "Lost your student ID on graduation day", 
-      image: "/images/freepik__the-style-is-candid-image-photography-with-natural__62684.jpeg",
-      severity: 45.5
-    },
-    {
-      id: 3,
-      title: "Got locked out of your dorm room naked",
-      image: "/images/freepik__the-style-is-candid-image-photography-with-natural__62685.jpeg", 
-      severity: 60.5
-    }
-  ]);
-
+  const [currentCard, setCurrentCard] = useState(null);
+  const [playerCards, setPlayerCards] = useState([]); // Starting hand + won cards
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [feedback, setFeedback] = useState(null); // Show correct/incorrect feedback
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // Initialize game data
+  useEffect(() => {
+    const initializeGame = async () => {
+      if (!gameSession) {
+        navigate('/themes');
+        return;
+      }
+
+      try {
+        // Get starting cards from the game session
+        if (gameSession.cards) {
+          // Ensure all starting cards have proper severity fields
+          const normalizedCards = gameSession.cards.map(card => ({
+            ...card,
+            bad_luck_severity: card.bad_luck_severity || card.severity,
+            severity: card.severity || card.bad_luck_severity
+          }));
+          console.log('Initial player cards:', normalizedCards);
+          setPlayerCards(normalizedCards);
+        }
+
+        // Get first card to place
+        const nextCardResult = await API.game.getNextCard(gameSession.session_id);
+        if (nextCardResult.success) {
+          setCurrentCard(nextCardResult.data);
+        }
+
+        setGameState(prev => ({
+          ...prev,
+          gameStarted: true,
+          loading: false
+        }));
+      } catch (error) {
+        console.error('Error initializing game:', error);
+        navigate('/themes');
+      }
+    };
+
+    initializeGame();
+  }, [gameSession, navigate]);
 
   // Timer countdown
   useEffect(() => {
     let timer;
-    if (gameState.gameStarted && gameState.timeLeft > 0) {
+    if (gameState.gameStarted && gameState.timeLeft > 0 && !showFeedback && !gameState.isCompleted) {
       timer = setTimeout(() => {
         setGameState(prev => ({ ...prev, timeLeft: prev.timeLeft - 1 }));
       }, 1000);
-    } else if (gameState.timeLeft === 0) {
-      // Time's up logic
-      setGameState(prev => ({ ...prev, wrongGuesses: prev.wrongGuesses + 1 }));
+    } else if (gameState.timeLeft === 0 && !showFeedback && !gameState.isCompleted) {
+      // Time's up - treat as wrong answer
+      handleTimeUp();
     }
     return () => clearTimeout(timer);
-  }, [gameState.gameStarted, gameState.timeLeft]);
+  }, [gameState.gameStarted, gameState.timeLeft, showFeedback, gameState.isCompleted]);
 
   const handleSlotClick = (slotIndex) => {
-    setSelectedSlot(slotIndex);
-  };
-
-  const handlePlaceCard = () => {
-    if (selectedSlot !== null) {
-      // Place the card logic here
-      setGameState(prev => ({ 
-        ...prev, 
-        cardsWon: prev.cardsWon + 1,
-        round: prev.round + 1,
-        timeLeft: 30 
-      }));
-      setSelectedSlot(null);
+    if (!gameState.isCompleted) {
+      setSelectedSlot(slotIndex);
     }
   };
+
+  const handleTimeUp = async () => {
+    if (!currentCard || !gameState.sessionId || gameState.isCompleted) return;
+
+    // Submit as timeout (wrong answer)
+    await submitMove(1, true); // Any position, but marked as timeout
+  };
+
+  const handlePlaceCard = async () => {
+    if (selectedSlot === null || !currentCard || !gameState.sessionId || gameState.isCompleted) return;
+
+    await submitMove(selectedSlot + 1, false); // Convert to 1-based position
+  };
+
+  const submitMove = async (position, isTimeout = false) => {
+    if (gameState.isCompleted) {
+      console.log('Game session is already completed, skipping move submission');
+      return;
+    }
+
+    try {
+      const moveData = {
+        round_number: gameState.round,
+        card_id: currentCard.id,
+        user_choice_position: position,
+        time_taken: isTimeout ? 31 : (30 - gameState.timeLeft)
+      };
+
+      const result = await API.game.submitMove(gameState.sessionId, moveData);
+      
+      if (result.success) {
+        const { is_correct, correct_position, card_severity } = result.data;
+        
+        // Show feedback
+        setFeedback({
+          isCorrect: is_correct,
+          correctPosition: correct_position,
+          userPosition: position,
+          severity: card_severity,
+          isTimeout
+        });
+        setShowFeedback(true);
+
+        // Update game state
+        const newCardsWon = is_correct ? gameState.cardsWon + 1 : gameState.cardsWon;
+        const newWrongGuesses = is_correct ? gameState.wrongGuesses : gameState.wrongGuesses + 1;
+        
+        setGameState(prev => ({
+          ...prev,
+          cardsWon: newCardsWon,
+          wrongGuesses: newWrongGuesses,
+          round: prev.round + 1
+        }));
+
+        // If correct, add card to player's hand
+        if (is_correct) {
+          // Try to get severity from multiple possible sources
+          let severityValue = null;
+          
+          // First try the API response card_severity
+          if (card_severity !== undefined && card_severity !== null && !isNaN(card_severity)) {
+            severityValue = card_severity;
+          }
+          // Then try currentCard's bad_luck_severity
+          else if (currentCard.bad_luck_severity !== undefined && currentCard.bad_luck_severity !== null && !isNaN(currentCard.bad_luck_severity)) {
+            severityValue = currentCard.bad_luck_severity;
+          }
+          // Then try currentCard's severity
+          else if (currentCard.severity !== undefined && currentCard.severity !== null && !isNaN(currentCard.severity)) {
+            severityValue = currentCard.severity;
+          }
+          // Final fallback - use a default based on correct_position
+          else {
+            severityValue = correct_position * 10; // Rough estimate based on position
+          }
+          
+          const newCard = { 
+            ...currentCard, 
+            bad_luck_severity: severityValue,
+            severity: severityValue // Ensure both field names are set
+          };
+          
+          setPlayerCards(prev => {
+            const updatedCards = [...prev, newCard].sort((a, b) => (a.bad_luck_severity || a.severity || 0) - (b.bad_luck_severity || b.severity || 0));
+            return updatedCards;
+          });
+        }
+
+        // Hide feedback after 3 seconds and load next card
+        setTimeout(async () => {
+          setShowFeedback(false);
+          setFeedback(null);
+          setSelectedSlot(null);
+          
+          // For anonymous users, end game after 1 round (demo game)
+          if (!isLoggedIn) {
+            setGameState(prev => ({ ...prev, isCompleted: true }));
+            navigate('/themes');
+            return;
+          }
+          
+          // For logged-in users, check normal game end conditions
+          if (newWrongGuesses >= 3) {
+            // Game over - too many wrong guesses
+            setGameState(prev => ({ ...prev, isCompleted: true }));
+            try {
+              await API.game.endGame(gameState.sessionId, { game_result: 'lost' });
+            } catch (error) {
+              console.error('Error ending lost game:', error);
+            }
+            navigate('/themes');
+          } else if (newCardsWon >= 3) {
+            // Game won - got 6 total cards (3 starting + 3 won)
+            setGameState(prev => ({ ...prev, isCompleted: true }));
+            try {
+              await API.game.endGame(gameState.sessionId, { game_result: 'won' });
+            } catch (error) {
+              console.error('Error ending won game:', error);
+            }
+            navigate('/profile');
+          } else {
+            // Load next card
+            const nextCardResult = await API.game.getNextCard(gameState.sessionId);
+            if (nextCardResult.success) {
+              setCurrentCard(nextCardResult.data);
+              setGameState(prev => ({ ...prev, timeLeft: 30 }));
+            }
+          }
+        }, 3000);
+
+      } else {
+        console.error('Failed to submit move:', result.error);
+        if (result.error === 'Game session is already completed') {
+          setGameState(prev => ({ ...prev, isCompleted: true }));
+          navigate('/themes');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting move:', error);
+      if (error.message && error.message.includes('already completed')) {
+        setGameState(prev => ({ ...prev, isCompleted: true }));
+        navigate('/themes');
+      }
+    }
+  };
+
+  // Show loading state
+  if (gameState.loading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status" style={{width: '3rem', height: '3rem'}}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 style={{color: isDark ? 'white' : '#1a1a1a'}}>Loading game...</h5>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no current card
+  if (!currentCard) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+        <div className="text-center">
+          <h5 style={{color: isDark ? 'white' : '#1a1a1a'}}>Failed to load game</h5>
+          <button className="btn btn-primary mt-3" onClick={() => navigate('/themes')}>
+            Back to Themes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-vh-100" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+      {/* Feedback Overlay */}
+      {showFeedback && feedback && (
+        <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000}}>
+          <div className="card border-0 shadow-lg text-center" style={{maxWidth: '400px', borderRadius: '20px'}}>
+            <div className="card-body p-4">
+              <div className={`mb-3 ${feedback.isCorrect ? 'text-success' : 'text-danger'}`}>
+                <div style={{fontSize: '4rem'}}>
+                  {feedback.isCorrect ? '✅' : '❌'}
+                </div>
+              </div>
+              <h4 className={`mb-3 ${feedback.isCorrect ? 'text-success' : 'text-danger'}`}>
+                {feedback.isTimeout ? 'Time\'s Up!' : 
+                 feedback.isCorrect ? (isLoggedIn ? 'Correct!' : 'Demo Complete - Correct!') : 
+                 (isLoggedIn ? 'Incorrect!' : 'Demo Complete - Incorrect!')}
+              </h4>
+              {!feedback.isTimeout && (
+                <p className="text-muted">
+                  {feedback.isCorrect 
+                    ? `Great job! This disaster belongs in position ${feedback.correctPosition}.`
+                    : `This disaster belongs in position ${feedback.correctPosition}, not position ${feedback.userPosition}.`
+                  }
+                  {!isLoggedIn && (
+                    <><br/><strong>Login to play the full game with multiple rounds!</strong></>
+                  )}
+                </p>
+              )}
+              <p className="text-muted mb-0">
+                Severity: {feedback.severity}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Fixed Top Header */}
       <div className="position-fixed w-100" style={{top: 0, left: 0, zIndex: 1050, backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)'}}>
         <div className="container-fluid py-2">
@@ -115,16 +337,20 @@ const Game = () => {
             <div className="col-md-8 text-center">
               <div className="row">
                 <div className="col-4">
-                  <div style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">{gameState.cardsWon}/6</div>
-                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Cards Won</div>
+                  <div style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">{3 + gameState.cardsWon}/6</div>
+                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Total Cards</div>
                 </div>
                 <div className="col-4">
                   <div className="text-danger fw-bold" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}}>{gameState.wrongGuesses}/3</div>
                   <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Wrong Guesses</div>
                 </div>
                 <div className="col-4">
-                  <div style={{color: isDark ? 'white' : '#1a1a1a', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">Round {gameState.round}</div>
-                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>Current Round</div>
+                  <div style={{color: isDark ? 'white' : '#1a1a1a', fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: '16px'}} className="fw-bold">
+                    {isLoggedIn ? `Round ${gameState.round}` : 'Demo Round'}
+                  </div>
+                  <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,26,0.8)', fontSize: '12px'}}>
+                    {isLoggedIn ? 'Current Round' : 'Single Round Demo'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -151,15 +377,15 @@ const Game = () => {
         {/* Current Question */}
         <div className="row mb-4">
           <div className="col-12">
-                          <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#4A90E2' : '#4A90E2', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px'}}>
+            <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#4A90E2' : '#4A90E2', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px'}}>
               <div className="card-body p-5">
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
-                                          <Target className="me-3" style={{color: 'white'}} size={36} />
+                    <Target className="me-3" style={{color: 'white'}} size={36} />
                       <h4 className="mb-0" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Where does this disaster belong?</h4>
                   </div>
                   <div className="d-flex align-items-center">
-                                          <Timer className="me-2" style={{color: 'white'}} size={24} />
+                    <Timer className="me-2" style={{color: 'white'}} size={24} />
                       <span className="fw-bold" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.timeLeft}s</span>
                       <div className="progress ms-3" style={{width: '100px', height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.2)'}}>
                         <div 
@@ -171,9 +397,9 @@ const Game = () => {
                 </div>
                 
                 <div className="text-center">
-                                      <div className="card d-inline-block shadow-sm" style={{maxWidth: '300px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
+                  <div className="card d-inline-block shadow-sm" style={{maxWidth: '300px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
                     <img 
-                      src={currentCard.image} 
+                      src={currentCard.image_url || currentCard.image} 
                       className="card-img-top"
                       alt="Current disaster"
                       style={{height: '150px', objectFit: 'cover'}}
@@ -191,97 +417,178 @@ const Game = () => {
         {/* Your Disaster Cards */}
         <div className="row">
           <div className="col-12">
-            <h5 className="mb-4" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Your Disaster Cards</h5>
+            <h5 className="mb-3" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Your Disaster Cards</h5>
             
-            <div className="d-flex align-items-center justify-content-center gap-3 overflow-auto pb-3">
-              {/* First placement slot */}
-              <div 
-                className={`border-3 p-4 text-center ${
-                  selectedSlot === 0 ? 'bg-opacity-10' : ''
-                }`}
-                style={{
-                  minWidth: '140px', 
-                  minHeight: '200px', 
-                  cursor: 'pointer',
-                  borderStyle: 'dashed',
-                                     borderColor: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
-                   backgroundColor: selectedSlot === 0 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
-                  borderRadius: '16px'
-                }}
-                onClick={() => handleSlotClick(0)}
-              >
-                <div className="d-flex align-items-center justify-content-center h-100">
-                  <div>
-                                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
-                      <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Disaster cards with placement slots between them */}
-              {disasterCards.map((card, index) => (
-                <React.Fragment key={card.id}>
-                                      <div className="card shadow-sm" style={{minWidth: '200px', borderRadius: '16px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
-                    <img 
-                      src={card.image} 
-                      className="card-img-top"
-                      alt={card.title}
-                      style={{height: '120px', objectFit: 'cover'}}
-                    />
-                    <div className="card-body p-3">
-                      <h6 className="card-title small mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: 'white'}}>{card.title}</h6>
-                      <div className="d-flex align-items-center justify-content-center">
-                        <AlertTriangle className="text-danger me-1" size={16} />
-                        <span className="fw-bold text-danger" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{card.severity}</span>
+            {/* Cards arranged by severity with placement slots between them */}
+            <div className="d-flex justify-content-center align-items-end flex-wrap" style={{gap: (() => {
+              const cardCount = playerCards.length;
+              if (cardCount <= 3) return '15px';
+              else if (cardCount <= 5) return '12px';
+              else return '10px';
+            })(), minHeight: '200px'}}>
+              {(() => {
+                // Sort player cards by severity to display in order
+                const sortedCards = [...playerCards].sort((a, b) => (a.bad_luck_severity || a.severity) - (b.bad_luck_severity || b.severity));
+                const elements = [];
+                
+                // Dynamic sizing based on number of cards
+                const getCardDimensions = (cardCount) => {
+                  if (cardCount <= 3) {
+                    return {
+                      cardWidth: '140px',
+                      cardHeight: '90px',
+                      slotWidth: '140px',
+                      slotHeight: '160px',
+                      fontSize: '14px',
+                      titleSize: '12px',
+                      severityIconSize: 14,
+                      severityFontSize: '12px',
+                      slotPlusSize: '28px',
+                      slotTextSize: '12px',
+                      gap: '15px'
+                    };
+                  } else if (cardCount <= 5) {
+                    return {
+                      cardWidth: '120px',
+                      cardHeight: '75px',
+                      slotWidth: '120px',
+                      slotHeight: '140px',
+                      fontSize: '12px',
+                      titleSize: '11px',
+                      severityIconSize: 12,
+                      severityFontSize: '11px',
+                      slotPlusSize: '24px',
+                      slotTextSize: '11px',
+                      gap: '12px'
+                    };
+                  } else {
+                    return {
+                      cardWidth: '100px',
+                      cardHeight: '60px',
+                      slotWidth: '100px',
+                      slotHeight: '120px',
+                      fontSize: '10px',
+                      titleSize: '9px',
+                      severityIconSize: 10,
+                      severityFontSize: '10px',
+                      slotPlusSize: '20px',
+                      slotTextSize: '10px',
+                      gap: '10px'
+                    };
+                  }
+                };
+                
+                const dimensions = getCardDimensions(sortedCards.length);
+                
+                // Add placement slot before first card
+                elements.push(
+                  <div key="slot-0" className="d-flex flex-column align-items-center">
+                    <div 
+                      className={`border-2 p-2 text-center ${
+                        selectedSlot === 0 ? 'bg-opacity-10' : ''
+                      }`}
+                      style={{
+                        width: dimensions.slotWidth,
+                        height: dimensions.slotHeight, 
+                        cursor: (showFeedback || gameState.isCompleted) ? 'not-allowed' : 'pointer',
+                        borderStyle: 'dashed',
+                        borderColor: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
+                        backgroundColor: selectedSlot === 0 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
+                        borderRadius: '12px',
+                        opacity: (showFeedback || gameState.isCompleted) ? 0.5 : 1,
+                        fontSize: '12px'
+                      }}
+                      onClick={() => !showFeedback && !gameState.isCompleted && handleSlotClick(0)}
+                    >
+                      <div className="d-flex align-items-center justify-content-center h-100">
+                        <div>
+                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
+                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+                
+                // Add cards and placement slots between them
+                sortedCards.forEach((card, index) => {
+                  // Add the card
+                  elements.push(
+                    <div key={`card-${index}`} className="d-flex flex-column align-items-center">
+                      <div className="card shadow-sm" style={{width: dimensions.cardWidth, borderRadius: '12px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
+                        <img 
+                          src={card.image_url || card.image || "/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg"} 
+                          className="card-img-top"
+                          alt={card.title}
+                          style={{height: dimensions.cardHeight, objectFit: 'cover'}}
+                        />
+                        <div className="card-body p-2">
+                          <h6 className="card-title small mb-1" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: 'white', fontSize: dimensions.titleSize, lineHeight: '1.1'}}>{card.title}</h6>
+                          <div className="d-flex align-items-center justify-content-center">
+                            <AlertTriangle className="text-danger me-1" size={dimensions.severityIconSize} />
+                            <span className="fw-bold text-danger" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: dimensions.severityFontSize}}>
+                              {Math.round(card.bad_luck_severity || card.severity || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
                   
-                  {/* Placement slot after each card */}
-                  <div 
-                    className={`border-3 p-4 text-center ${
-                      selectedSlot === index + 1 ? 'bg-opacity-10' : ''
-                    }`}
-                    style={{
-                      minWidth: '140px', 
-                      minHeight: '200px', 
-                      cursor: 'pointer',
-                      borderStyle: 'dashed',
-                                              borderColor: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
-                        backgroundColor: selectedSlot === index + 1 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
-                      borderRadius: '16px'
-                    }}
-                    onClick={() => handleSlotClick(index + 1)}
-                  >
-                    <div className="d-flex align-items-center justify-content-center h-100">
-                      <div>
-                                                  <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '32px', fontWeight: '300', lineHeight: '1'}}>+</div>
-                          <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: '16px', fontWeight: '600', marginTop: '8px', fontFamily: 'Poppins, sans-serif'}}>Place Here</div>
+                  // Add placement slot after each card (except the last one gets a final slot)
+                  elements.push(
+                    <div key={`slot-${index + 1}`} className="d-flex flex-column align-items-center">
+                      <div 
+                        className={`border-2 p-2 text-center ${
+                          selectedSlot === index + 1 ? 'bg-opacity-10' : ''
+                        }`}
+                        style={{
+                          width: dimensions.slotWidth,
+                          height: dimensions.slotHeight, 
+                          cursor: (showFeedback || gameState.isCompleted) ? 'not-allowed' : 'pointer',
+                          borderStyle: 'dashed',
+                          borderColor: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
+                          backgroundColor: selectedSlot === index + 1 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
+                          borderRadius: '12px',
+                          opacity: (showFeedback || gameState.isCompleted) ? 0.5 : 1,
+                          fontSize: '12px'
+                        }}
+                        onClick={() => !showFeedback && !gameState.isCompleted && handleSlotClick(index + 1)}
+                      >
+                        <div className="d-flex align-items-center justify-content-center h-100">
+                          <div>
+                            <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
+                            <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </React.Fragment>
-              ))}
+                  );
+                });
+                
+                return elements;
+              })()}
             </div>
 
             {/* Place Card Button */}
-            {selectedSlot !== null && (
-              <div className="text-center mt-4">
+            {selectedSlot !== null && !gameState.isCompleted && (
+              <div className="text-center mt-3">
                 <button 
-                  className="btn btn-lg px-5 py-3 shadow-sm"
+                  className="btn btn-lg px-4 py-2 shadow-sm"
                   style={{
                     backgroundColor: 'white',
                     color: 'black',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: '600',
                     fontFamily: 'Poppins, sans-serif',
-                    borderRadius: '25px',
+                    borderRadius: '20px',
                     border: 'none',
                     boxShadow: '0 4px 12px rgba(255, 255, 255, 0.3)',
-                    padding: '12px 30px',
+                    padding: '10px 25px',
                     transition: 'all 0.3s ease'
                   }}
                   onClick={handlePlaceCard}
+                  disabled={gameState.isCompleted}
                 >
                   Place Card Here
                 </button>
@@ -293,7 +600,7 @@ const Game = () => {
         {/* Game Instructions */}
         <div className="row mt-4">
           <div className="col-12">
-                          <div className="card border-0 shadow-sm" style={{backgroundColor: isDark ? '#2563eb' : '#3b82f6', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)'}}>
+            <div className="card border-0 shadow-sm" style={{backgroundColor: isDark ? '#2563eb' : '#3b82f6', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.2)'}}>
               <div className="card-body p-4">
                 <div className="text-center" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: 'rgba(255,255,255,0.8)'}}>
                   <strong style={{fontWeight: '600'}}>How to play:</strong> Click on a "Place Here" slot where you think this disaster belongs based on severity. 
