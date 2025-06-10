@@ -1,44 +1,61 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import API from '../services/api.mjs';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      // Here you would handle actual login logic
-      console.log('Login attempt:', formData);
-      
-      // Log the user in with mock data
-      login({
-        email: formData.email,
-        name: 'Student Player'
+    try {
+      const result = await API.auth.login({
+        username: formData.username,
+        password: formData.password
       });
       
-      // Redirect after successful login
-      navigate('/');
-    }, 1500);
+      if (result.success) {
+        // Login to context
+        await login(result.data.user);
+        
+        // Redirect after successful login
+        navigate('/');
+      } else {
+        // Show the specific error message from the server
+        setError(result.error || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      // Only show network error for actual network issues
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,24 +113,31 @@ const Login = () => {
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                  {/* Email Field */}
+                  {/* Error Message */}
+                  {error && (
+                    <div className="alert alert-danger mb-3" role="alert">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Username Field */}
                   <div className="mb-3">
-                    <label htmlFor="email" className="form-label fw-semibold" style={{color: '#1e3a8a'}}>
-                      Email Address
+                    <label htmlFor="username" className="form-label fw-semibold" style={{color: '#1e3a8a'}}>
+                      Username
                     </label>
                     <div className="position-relative">
-                      <Mail 
+                      <User 
                         className="position-absolute top-50 translate-middle-y ms-3" 
                         size={20} 
                         style={{color: '#4A90E2'}}
                       />
                       <input
-                        type="email"
+                        type="text"
                         className="form-control ps-5 py-3"
-                        id="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
+                        id="username"
+                        name="username"
+                        placeholder="Enter your username"
+                        value={formData.username}
                         onChange={handleChange}
                         required
                         style={{
