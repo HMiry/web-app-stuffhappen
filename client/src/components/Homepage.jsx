@@ -6,7 +6,7 @@ import ThemeToggle from './ThemeToggle';
 
 const Homepage = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
 
   return (
     <div 
@@ -54,7 +54,7 @@ const Homepage = () => {
                 e.currentTarget.style.color = 'white';
               }}
               >
-                Student Player
+                {user?.name || user?.username || 'Student Player'}
               </button>
               <button 
               className="px-3 py-2"
@@ -377,7 +377,7 @@ const Homepage = () => {
       </div>
 
       {/* CSS Animation Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes bounce {
           0%, 20%, 50%, 80%, 100% {
             transform: translateY(0);

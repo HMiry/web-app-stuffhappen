@@ -1,90 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, GraduationCap, Heart, MapPin, Dumbbell, Briefcase, Home, Unlock, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import API from '../services/api.mjs';
 
 const Themes = () => {
   const navigate = useNavigate();
   const { isLoggedIn, selectedTheme, selectTheme } = useAuth();
   const { isDark } = useTheme();
+  const [themes, setThemes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const themes = [
-    {
-      id: 'university',
-      name: 'University Life',
-      icon: GraduationCap,
-      color: '#4A90E2',
-      description: 'Academic disasters, dorm room catastrophes, and campus embarrassments',
-      isActive: true,
-      badge: null,
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg',
-      limitation: isLoggedIn ? null : 'Demo: 1 round only'
-    },
-    {
-      id: 'love',
-      name: 'Love & Dating',
-      icon: Heart,
-      color: '#9ca3af',
-      description: 'Romantic disasters and relationship catastrophes',
-      isActive: isLoggedIn,
-      loginRequired: !isLoggedIn,
-      lockMessage: 'Login Required',
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62689.jpeg'
-    },
-    {
-      id: 'travel',
-      name: 'Travel & Tourism',
-      icon: MapPin,
-      color: '#9ca3af',
-      description: 'Vacation nightmares and travel mishaps',
-      isActive: false,
-      loginRequired: !isLoggedIn,
-      lockMessage: 'Coming Soon',
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62690.jpeg'
-    },
-    {
-      id: 'sports',
-      name: 'Sports & Fitness',
-      icon: Dumbbell,
-      color: '#9ca3af',
-      description: 'Gym embarrassments and athletic accidents',
-      isActive: false,
-      loginRequired: !isLoggedIn,
-      lockMessage: 'Coming Soon',
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62691.jpeg'
-    },
-    {
-      id: 'work',
-      name: 'Work Life',
-      icon: Briefcase,
-      color: '#9ca3af',
-      description: 'Office disasters and career catastrophes',
-      isActive: false,
-      loginRequired: !isLoggedIn,
-      lockMessage: 'Coming Soon',
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62687.jpeg'
-    },
-    {
-      id: 'family',
-      name: 'Family Life',
-      icon: Home,
-      color: '#9ca3af',
-      description: 'Household disasters and family embarrassments',
-      isActive: false,
-      loginRequired: !isLoggedIn,
-      lockMessage: 'Coming Soon',
-      backgroundImage: '/images/freepik__the-style-is-candid-image-photography-with-natural__62688.jpeg'
-    }
-  ];
+  // Icon mapping for themes
+  const iconMap = {
+    'university': GraduationCap,
+    'love': Heart,
+    'travel': MapPin,
+    'sports': Dumbbell,
+    'work': Briefcase,
+    'family': Home
+  };
+
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        setLoading(true);
+        const result = await API.theme.getAll();
+        
+        if (result.success) {
+          // Transform server data to match component expectations
+          const transformedThemes = result.data.map(theme => ({
+              id: theme.theme_key,
+              name: theme.name,
+              icon: iconMap[theme.theme_key] || GraduationCap,
+              color: theme.is_active ? '#4A90E2' : '#9ca3af',
+              description: theme.description,
+              isActive: theme.is_active,
+              loginRequired: theme.requires_login && !isLoggedIn,
+              lockMessage: theme.requires_login && !isLoggedIn ? 'Login Required' : (!theme.is_active ? 'Coming Soon' : null),
+              backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg`,
+              limitation: (!isLoggedIn && theme.theme_key === 'university') ? 'Demo: 1 round only' : null
+            }));
+          
+          setThemes(transformedThemes);
+        } else {
+          setError(result.error || 'Failed to load themes');
+        }
+      } catch (error) {
+        console.error('Error fetching themes:', error);
+        setError('Network error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchThemes();
+  }, [isLoggedIn]);
 
   const handleThemeSelect = (themeId) => {
     const theme = themes.find(t => t.id === themeId);
     if (theme && (theme.isActive || isLoggedIn)) {
       selectTheme(themeId);
-      console.log('Theme selected:', themeId); // Debug log
     }
   };
+
+  const handleStartGame = async () => {
+    if (!selectedTheme) return;
+    
+    try {
+      const result = await API.game.startGame(selectedTheme);
+      if (result.success) {
+        navigate('/game', { state: { gameSession: result.data } });
+      } else {
+        setError(result.error || 'Failed to start game');
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
+      setError('Failed to start game. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status" style={{width: '3rem', height: '3rem'}}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h5 className="text-muted">Loading themes...</h5>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-vh-100" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
@@ -171,10 +180,15 @@ const Themes = () => {
         </div>
 
         {/* Action Buttons - Show when theme is selected */}
-        {selectedTheme && (
+        {selectedTheme && themes.length > 0 && themes.find(t => t.id === selectedTheme) && (
           <div className="row mb-3">
             <div className="col-12">
               <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderRadius: '20px'}}>
+                {error && (
+                  <div className="alert alert-danger mb-3" role="alert">
+                    {error}
+                  </div>
+                )}
                 <div className="card-body p-3 text-center">
                   <h3 className="mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: isDark ? 'white' : '#1a1a1a', fontSize: '1.5rem'}}>
                     Ready to Face the {themes.find(t => t.id === selectedTheme)?.name} Disasters?
@@ -195,7 +209,7 @@ const Themes = () => {
                         fontSize: '16px',
                         transition: 'all 0.3s ease'
                       }}
-                      onClick={() => navigate('/game')}
+                      onClick={handleStartGame}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'white';
                         e.currentTarget.style.color = '#4A90E2';
@@ -219,12 +233,12 @@ const Themes = () => {
         )}
 
         <div className="row g-3 mb-4">
-          {themes.map((theme) => {
+          {themes.map((theme, index) => {
             const IconComponent = theme.icon;
             const isLocked = theme.loginRequired && !isLoggedIn;
             
             return (
-              <div key={theme.id} className="col-lg-4 col-md-6">
+              <div key={`theme-${theme.id}-${index}`} className="col-lg-4 col-md-6">
                 <div 
                   className={`card h-100 position-relative overflow-hidden ${
                     selectedTheme === theme.id && theme.isActive 
