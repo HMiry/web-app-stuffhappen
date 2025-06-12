@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import db from '../db/database.mjs';
 
 /** USERS **/
@@ -48,23 +48,18 @@ export const getUserByUsername = (username) => {
 }
 
 // add a new user
-export const addUser = (user) => {
-  return new Promise((resolve, reject) => {
-    // Generate salt and hash password
-    const salt = crypto.randomBytes(16).toString('hex');
-    
-    crypto.scrypt(user.password, salt, 16, (err, hashedPassword) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+export const addUser = async (user) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Hash password with bcrypt
+      const hashedPassword = await bcrypt.hash(user.password, 10);
       
       const sql = 'INSERT INTO users(username, email, password_hash, salt, name, university, major, avatar_url, role) VALUES (?,?,?,?,?,?,?,?,?)';
       db.run(sql, [
         user.username, 
         user.email, 
-        hashedPassword.toString('hex'),
-        salt,
+        hashedPassword,
+        '', // No separate salt needed with bcrypt
         user.name || null,
         user.university || null,
         user.major || null,
@@ -76,7 +71,9 @@ export const addUser = (user) => {
         else 
           resolve(this.lastID);
       });
-    });
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -115,10 +112,10 @@ export const deleteUser = (userId) => {
 }
 
 // authenticate user (simplified)
-export const authenticateUser = (username, password) => {
-  return new Promise((resolve, reject) => {
+export const authenticateUser = async (username, password) => {
+  return new Promise(async (resolve, reject) => {
     const sql = 'SELECT * FROM users WHERE username = ?';
-    db.get(sql, [username], (err, row) => {
+    db.get(sql, [username], async (err, row) => {
       if (err) { 
         reject(err); 
       }
@@ -126,15 +123,19 @@ export const authenticateUser = (username, password) => {
         resolve({ error: 'USER_NOT_FOUND', message: 'User not found' });
       }
       else {
-        const user = {id: row.id, username: row.username, email: row.email, name: row.name};
-        
-        crypto.scrypt(password, row.salt, 16, function(err, hashedPassword) {
-          if (err) reject(err);
-          if(!crypto.timingSafeEqual(Buffer.from(row.password_hash, 'hex'), hashedPassword))
+        try {
+          const user = {id: row.id, username: row.username, email: row.email, name: row.name};
+          
+          // Compare password with bcrypt
+          const isValid = await bcrypt.compare(password, row.password_hash);
+          if (!isValid) {
             resolve({ error: 'WRONG_PASSWORD', message: 'Incorrect password' });
-          else
+          } else {
             resolve(user);
-        });
+          }
+        } catch (error) {
+          reject(error);
+        }
       }
     });
   });

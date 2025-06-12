@@ -1,11 +1,13 @@
 import db from './database.mjs';
+import bcrypt from 'bcrypt';
 
 const seedDatabase = () => {
   return new Promise((resolve, reject) => {
     console.log('🌱 Seeding database with initial data...');
 
-    // Two main themes with 100+ cards total (50 each)
+    // Active themes with cards + Coming Soon themes
     const themes = [
+      // Active playable themes (ordered first)
       {
         theme_key: 'university',
         name: 'University Life',
@@ -29,10 +31,141 @@ const seedDatabase = () => {
         difficulty_level: 2,
         is_active: 1,
         requires_login: 1
+      },
+      // Coming Soon themes (inactive, locked, ordered after active ones)
+      {
+        theme_key: 'family',
+        name: 'Family & Home',
+        description: 'Family disasters, household catastrophes, and domestic mishaps',
+        icon: 'Home',
+        color: '#6B7280',
+        background_image: '/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg',
+        category: 'relationships',
+        difficulty_level: 5,
+        is_active: 0,
+        requires_login: 1
+      },
+      {
+        theme_key: 'sports',
+        name: 'Sports & Fitness',
+        description: 'Athletic disasters, gym embarrassments, and sports catastrophes',
+        icon: 'Dumbbell',
+        color: '#6B7280',
+        background_image: '/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg',
+        category: 'lifestyle',
+        difficulty_level: 6,
+        is_active: 0,
+        requires_login: 1
+      },
+      {
+        theme_key: 'travel',
+        name: 'Travel & Adventure',
+        description: 'Vacation disasters, travel mishaps, and adventure gone wrong',
+        icon: 'MapPin',
+        color: '#6B7280',
+        background_image: '/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg',
+        category: 'lifestyle',
+        difficulty_level: 7,
+        is_active: 0,
+        requires_login: 1
+      },
+      {
+        theme_key: 'work',
+        name: 'Work & Career',
+        description: 'Professional disasters, office mishaps, and career catastrophes',
+        icon: 'Briefcase',
+        color: '#6B7280',
+        background_image: '/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg',
+        category: 'professional',
+        difficulty_level: 8,
+        is_active: 0,
+        requires_login: 1
       }
     ];
 
-    // Insert themes first
+    // Default users to seed
+    const users = [
+      {
+        username: 'admin',
+        email: 'info@stuffhappens.com',
+        password: 'admin123',
+        name: 'Admin User',
+        role: 'admin'
+      },
+      {
+        username: 'hojjat',
+        email: 'hojjat@test.com', 
+        password: 'hojjat123',
+        name: 'Hojjat',
+        role: 'user'
+      },
+      {
+        username: 'FulvioCorno',
+        email: 'fulviocorno@test.com',
+        password: 'fulviocorno123',
+        name: 'Fulvio Corno',
+        role: 'user'
+      },
+      {
+        username: 'FrancescaRusso',
+        email: 'francescarusso@test.com',
+        password: 'francescarusso123', 
+        name: 'Francesca Russo',
+        role: 'user'
+      }
+    ];
+
+    // Insert users first
+    const insertUsers = () => {
+      return new Promise((resolve, reject) => {
+        let completed = 0;
+        const total = users.length;
+
+        if (total === 0) {
+          resolve();
+          return;
+        }
+
+        users.forEach(async (user, index) => {
+          try {
+            // Hash password with bcrypt
+            const hashedPassword = await bcrypt.hash(user.password, 10);
+            
+            const stmt = db.prepare(`
+              INSERT OR IGNORE INTO users 
+              (username, email, password_hash, salt, name, role) 
+              VALUES (?, ?, ?, ?, ?, ?)
+            `);
+
+            stmt.run([
+              user.username, 
+              user.email, 
+              hashedPassword,
+              '', // No separate salt needed with bcrypt
+              user.name, 
+              user.role
+            ], function(err) {
+              if (err) {
+                reject(err);
+                return;
+              }
+              
+              completed++;
+              if (completed === total) {
+                console.log(`✅ Inserted ${total} users`);
+                resolve();
+              }
+            });
+
+            stmt.finalize();
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    };
+
+    // Insert themes second
     const insertThemes = () => {
       return new Promise((resolve, reject) => {
         let completed = 0;
@@ -242,7 +375,8 @@ const seedDatabase = () => {
     };
 
     // Run seeding process
-    insertThemes()
+    insertUsers()
+      .then(() => insertThemes())
       .then(() => insertCards())
       .then(() => {
         console.log('🎉 Database seeding completed successfully!');

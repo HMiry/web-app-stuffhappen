@@ -134,7 +134,7 @@ const Homepage = () => {
                 transform: 'rotate(-8deg)'
               }}
             >
-              <div style={{color: '#1e293b', fontSize: '40px', fontWeight: '900', lineHeight: '1'}}>
+              <div style={{color: '#1e293b', fontSize: '40px', fontWeight: '900', lineHeight: '1', transform: 'rotate(180deg)'}}>
                 !
               </div>
             </div>

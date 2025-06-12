@@ -27,17 +27,18 @@ const Themes = () => {
     const fetchThemes = async () => {
       try {
         setLoading(true);
-        const result = await API.theme.getAll();
+        const result = await API.theme.getAllThemes();
         
         if (result.success) {
           // Transform server data to match component expectations
-          const transformedThemes = result.data.map(theme => ({
+                      const transformedThemes = result.data.map(theme => ({
               id: theme.theme_key,
               name: theme.name,
               icon: iconMap[theme.theme_key] || GraduationCap,
               color: theme.is_active ? '#4A90E2' : '#9ca3af',
               description: theme.description,
               isActive: theme.is_active,
+              requires_login: theme.requires_login,
               loginRequired: theme.requires_login && !isLoggedIn,
               lockMessage: theme.requires_login && !isLoggedIn ? 'Login Required' : (!theme.is_active ? 'Coming Soon' : null),
               backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg`,
@@ -235,28 +236,29 @@ const Themes = () => {
         <div className="row g-3 mb-4">
           {themes.map((theme, index) => {
             const IconComponent = theme.icon;
-            const isLocked = theme.loginRequired && !isLoggedIn;
+            const isLocked = !theme.isActive || (theme.requires_login && !isLoggedIn);
+            const isClickable = theme.isActive && (!theme.requires_login || isLoggedIn);
             
             return (
               <div key={`theme-${theme.id}-${index}`} className="col-lg-4 col-md-6">
                 <div 
                   className={`card h-100 position-relative overflow-hidden ${
-                    selectedTheme === theme.id && theme.isActive 
+                    selectedTheme === theme.id && isClickable 
                       ? 'border-3' 
                       : 'border-1'
                   }`}
                   style={{
-                    cursor: (isLocked || !theme.isActive) && !isLoggedIn ? 'not-allowed' : 'pointer',
-                    borderColor: selectedTheme === theme.id && (theme.isActive || isLoggedIn) ? '#4A90E2' : '#e5e7eb',
-                    opacity: (isLocked || !theme.isActive) && !isLoggedIn ? 0.7 : 1,
+                    cursor: isClickable ? 'pointer' : 'not-allowed',
+                    borderColor: selectedTheme === theme.id && isClickable ? '#4A90E2' : '#e5e7eb',
+                    opacity: isLocked ? 0.6 : 1,
                     backgroundImage: `url(${theme.backgroundImage})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     borderRadius: '24px',
-                    boxShadow: selectedTheme === theme.id && (theme.isActive || isLoggedIn) ? '0 8px 25px rgba(37, 99, 235, 0.25)' : '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    boxShadow: selectedTheme === theme.id && isClickable ? '0 8px 25px rgba(37, 99, 235, 0.25)' : '0 4px 12px rgba(0, 0, 0, 0.1)'
                   }}
                   onClick={() => {
-                    if ((theme.isActive || isLoggedIn) && !(isLocked && !isLoggedIn)) {
+                    if (isClickable) {
                       handleThemeSelect(theme.id);
                     }
                   }}
@@ -273,7 +275,17 @@ const Themes = () => {
                   {/* Lock icon for locked themes */}
                   {isLocked && (
                     <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 2 }}>
-                      <Lock size={20} className="text-white" />
+                      <div 
+                        className="rounded-circle d-inline-flex align-items-center justify-content-center"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: 'rgba(107, 114, 128, 0.9)',
+                          backdropFilter: 'blur(10px)'
+                        }}
+                      >
+                        <Lock size={16} className="text-white" />
+                      </div>
                     </div>
                   )}
                   
@@ -316,16 +328,17 @@ const Themes = () => {
                       {theme.description}
                     </p>
                     
-                    {isLocked && (
-                      <p className="small text-white fst-italic" style={{ opacity: 0.8, fontFamily: 'Poppins, sans-serif', fontWeight: '400' }}>
-                        {theme.lockMessage}
+                    {/* Show lock message or coming soon for inactive themes */}
+                    {!theme.isActive && (
+                      <p className="small text-white fst-italic mb-0" style={{ opacity: 0.9, fontFamily: 'Poppins, sans-serif', fontWeight: '500' }}>
+                        Coming Soon
                       </p>
                     )}
-
-                    {/* Show "Coming Soon" for inactive themes when logged in */}
-                    {!theme.isActive && isLoggedIn && !isLocked && (
-                      <p className="small text-white fst-italic" style={{ opacity: 0.8, fontFamily: 'Poppins, sans-serif', fontWeight: '400' }}>
-                        Coming Soon
+                    
+                    {/* Show login required message if theme needs login */}
+                    {theme.isActive && theme.requires_login && !isLoggedIn && (
+                      <p className="small text-white fst-italic mb-0" style={{ opacity: 0.9, fontFamily: 'Poppins, sans-serif', fontWeight: '500' }}>
+                        Login Required
                       </p>
                     )}
                   </div>

@@ -23,14 +23,55 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
-    // Here you would save to backend
+  const handleSaveProfile = async () => {
+    if (!user?.id || !userInfo) return;
+    
+    try {
+      // Prepare the data to update - only send required fields
+      const updateData = {
+        username: userInfo.username || user.username,
+        email: userInfo.email || user.email,
+        name: userInfo.name || user.name
+      };
+      
+      const result = await API.user.updateProfile(user.id, updateData);
+      
+      if (result.success) {
+        // Update successful - close modal
+        setIsEditing(false);
+        
+        // Optionally refresh the user data
+        const profileResult = await API.user.getProfile(user.id);
+        if (profileResult.success) {
+          setUserInfo(profileResult.data);
+        }
+      } else {
+        // Show error message
+        console.error('Failed to update profile:', result.error);
+        alert('Failed to update profile: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Error updating profile. Please try again.');
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    // Reset form if needed
+    // Reset form to original values
+    if (user?.id) {
+      const fetchUserData = async () => {
+        try {
+          const profileResult = await API.user.getProfile(user.id);
+          if (profileResult.success) {
+            setUserInfo(profileResult.data);
+          }
+        } catch (error) {
+          console.error('Error resetting user data:', error);
+        }
+      };
+      fetchUserData();
+    }
   };
 
   // Fetch user profile and game history
@@ -246,7 +287,7 @@ const Profile = () => {
               <div className="mb-4">
                 <div className="d-flex align-items-center mb-4">
                   <img 
-                    src="/images/logo.png" 
+                    src="/images/logo1.png" 
                     alt="Logo" 
                     className="img-fluid me-3"
                     style={{ 
@@ -381,6 +422,25 @@ const Profile = () => {
                 </div>
                 <div className="modal-body p-4">
                   <form>
+                    <div className="mb-3">
+                      <label className="form-label fw-semibold" style={{fontFamily: 'Poppins, sans-serif', color: isDark ? 'white' : '#1a1a1a'}}>
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control py-2"
+                        value={userInfo?.username || ''}
+                        onChange={(e) => setUserInfo({...userInfo, username: e.target.value})}
+                        style={{
+                          borderColor: '#4A90E2',
+                          borderRadius: '8px',
+                          fontFamily: 'Poppins, sans-serif',
+                          backgroundColor: isDark ? '#333333' : '#ffffff',
+                          color: isDark ? 'white' : '#1a1a1a',
+                          border: '1px solid #4A90E2'
+                        }}
+                      />
+                    </div>
                     <div className="mb-3">
                       <label className="form-label fw-semibold" style={{fontFamily: 'Poppins, sans-serif', color: isDark ? 'white' : '#1a1a1a'}}>
                         Full Name
