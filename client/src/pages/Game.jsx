@@ -5,6 +5,62 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import API from '../services/api.mjs';
 
+// Game Completion Popup Component
+const GameCompletionPopup = ({ message, onComplete }) => {
+  const [countdown, setCountdown] = useState(3);
+  const { isDark } = useTheme();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          onComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2100}}>
+      <div className="card border-0 shadow-lg text-center" style={{width: '320px', height: '320px', borderRadius: '20px', display: 'flex', alignItems: 'center'}}>
+        <div className="card-body p-4 d-flex flex-column justify-content-center h-100">
+          <div className="mb-3">
+            <div style={{fontSize: '3rem'}}>
+              {message.icon}
+            </div>
+          </div>
+          <h5 className={`mb-2 ${message.type === 'won' ? 'text-success' : 'text-danger'}`} style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '18px'}}>
+            {message.title}
+          </h5>
+          <p className="text-muted mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', fontSize: '13px', lineHeight: '1.3'}}>
+            {message.message}
+          </p>
+          <div className="mb-3">
+            <div className="text-muted" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', fontSize: '12px'}}>
+              Redirecting in
+            </div>
+            <div className="fw-bold text-primary" style={{fontFamily: 'Poppins, sans-serif', fontSize: '28px'}}>
+              {countdown}
+            </div>
+          </div>
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={onComplete}
+            style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '12px', padding: '6px 16px'}}
+          >
+            Go Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Game = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,9 +82,11 @@ const Game = () => {
 
   const [currentCard, setCurrentCard] = useState(null);
   const [playerCards, setPlayerCards] = useState([]); // Starting hand + won cards
-  const [selectedSlot, setSelectedSlot] = useState(null);
+
   const [feedback, setFeedback] = useState(null); // Show correct/incorrect feedback
   const [showFeedback, setShowFeedback] = useState(false);
+  const [gameCompletionMessage, setGameCompletionMessage] = useState(null); // Final game completion message
+  const [showGameCompletion, setShowGameCompletion] = useState(false);
 
   // Initialize game data
   useEffect(() => {
@@ -85,9 +143,10 @@ const Game = () => {
     return () => clearTimeout(timer);
   }, [gameState.gameStarted, gameState.timeLeft, showFeedback, gameState.isCompleted]);
 
-  const handleSlotClick = (slotIndex) => {
-    if (!gameState.isCompleted) {
-      setSelectedSlot(slotIndex);
+  const handleSlotClick = async (slotIndex) => {
+    if (!gameState.isCompleted && !showFeedback) {
+      // Auto-submit the move immediately when slot is clicked
+      await submitMove(slotIndex + 1, false); // Convert to 1-based position
     }
   };
 
@@ -98,11 +157,7 @@ const Game = () => {
     await submitMove(1, true); // Any position, but marked as timeout
   };
 
-  const handlePlaceCard = async () => {
-    if (selectedSlot === null || !currentCard || !gameState.sessionId || gameState.isCompleted) return;
 
-    await submitMove(selectedSlot + 1, false); // Convert to 1-based position
-  };
 
   const submitMove = async (position, isTimeout = false) => {
     if (gameState.isCompleted) {
@@ -178,47 +233,7 @@ const Game = () => {
           });
         }
 
-        // Hide feedback after 3 seconds and load next card
-        setTimeout(async () => {
-          setShowFeedback(false);
-          setFeedback(null);
-          setSelectedSlot(null);
-          
-          // For anonymous users, end game after 1 round (demo game)
-          if (!isLoggedIn) {
-            setGameState(prev => ({ ...prev, isCompleted: true }));
-            navigate('/themes');
-            return;
-          }
-          
-          // For logged-in users, check normal game end conditions
-          if (newWrongGuesses >= 3) {
-            // Game over - too many wrong guesses
-            setGameState(prev => ({ ...prev, isCompleted: true }));
-            try {
-              await API.game.endGame(gameState.sessionId, { game_result: 'lost' });
-            } catch (error) {
-              console.error('Error ending lost game:', error);
-            }
-            navigate('/themes');
-          } else if (newCardsWon >= 3) {
-            // Game won - got 6 total cards (3 starting + 3 won)
-            setGameState(prev => ({ ...prev, isCompleted: true }));
-            try {
-              await API.game.endGame(gameState.sessionId, { game_result: 'won' });
-            } catch (error) {
-              console.error('Error ending won game:', error);
-            }
-            navigate('/profile');
-          } else {
-            // Load next card
-            const nextCardResult = await API.game.getNextCard(gameState.sessionId);
-            if (nextCardResult.success) {
-              setCurrentCard(nextCardResult.data);
-              setGameState(prev => ({ ...prev, timeLeft: 30 }));
-            }
-          }
-        }, 3000);
+        // Note: Removed setTimeout - users now click OK button to continue
 
       } else {
         console.error('Failed to submit move:', result.error);
@@ -282,7 +297,7 @@ const Game = () => {
                  (isLoggedIn ? 'Incorrect!' : 'Demo Complete - Incorrect!')}
               </h4>
               {!feedback.isTimeout && (
-                <p className="text-muted">
+                <p className="text-muted mb-3">
                   {feedback.isCorrect 
                     ? `Great job! This disaster belongs in position ${feedback.correctPosition}.`
                     : `This disaster belongs in position ${feedback.correctPosition}, not position ${feedback.userPosition}.`
@@ -292,12 +307,85 @@ const Game = () => {
                   )}
                 </p>
               )}
-              <p className="text-muted mb-0">
-                Severity: {feedback.severity}
-              </p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setShowFeedback(false);
+                  setFeedback(null);
+                  
+                  // Handle game continuation logic (copied from setTimeout logic)
+                  const handleGameContinuation = async () => {
+                    // For anonymous users, end game after 1 round (demo game)
+                    if (!isLoggedIn) {
+                      setGameState(prev => ({ ...prev, isCompleted: true }));
+                      navigate('/themes');
+                      return;
+                    }
+                    
+                    // For logged-in users, check normal game end conditions
+                    // Use current gameState values since they were already updated in submitMove
+                    const newCardsWon = gameState.cardsWon;
+                    const newWrongGuesses = gameState.wrongGuesses;
+                    
+                    if (newWrongGuesses >= 3) {
+                      // Game over - too many wrong guesses
+                      setGameState(prev => ({ ...prev, isCompleted: true }));
+                      try {
+                        await API.game.endGame(gameState.sessionId, { game_result: 'lost' });
+                      } catch (error) {
+                        console.error('Error ending lost game:', error);
+                      }
+                      // Show game completion message
+                      setGameCompletionMessage({
+                        type: 'lost',
+                        title: 'Game Over!',
+                        message: 'Sorry, better luck next time! You made 3 wrong guesses.',
+                        icon: '😔'
+                      });
+                      setShowGameCompletion(true);
+                    } else if (newCardsWon >= 3) {
+                      // Game won - got 6 total cards (3 starting + 3 won)
+                      setGameState(prev => ({ ...prev, isCompleted: true }));
+                      try {
+                        await API.game.endGame(gameState.sessionId, { game_result: 'won' });
+                      } catch (error) {
+                        console.error('Error ending won game:', error);
+                      }
+                      // Show game completion message
+                      setGameCompletionMessage({
+                        type: 'won',
+                        title: 'Congratulations!',
+                        message: 'You won the game! You collected all 6 disaster cards.',
+                        icon: '🎉'
+                      });
+                      setShowGameCompletion(true);
+                    } else {
+                      // Load next card
+                      const nextCardResult = await API.game.getNextCard(gameState.sessionId);
+                      if (nextCardResult.success) {
+                        setCurrentCard(nextCardResult.data);
+                        setGameState(prev => ({ ...prev, timeLeft: 30 }));
+                      }
+                    }
+                  };
+                  
+                  handleGameContinuation();
+                }}
+                style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Game Completion Overlay */}
+      {showGameCompletion && gameCompletionMessage && (
+        <GameCompletionPopup 
+          message={gameCompletionMessage}
+          onComplete={() => navigate('/profile')}
+        />
       )}
 
       {/* Fixed Top Header */}
@@ -437,7 +525,7 @@ const Game = () => {
                     return {
                       cardWidth: '140px',
                       cardHeight: '90px',
-                      slotWidth: '140px',
+                      slotWidth: '80px',
                       slotHeight: '160px',
                       fontSize: '14px',
                       titleSize: '12px',
@@ -451,7 +539,7 @@ const Game = () => {
                     return {
                       cardWidth: '120px',
                       cardHeight: '75px',
-                      slotWidth: '120px',
+                      slotWidth: '70px',
                       slotHeight: '140px',
                       fontSize: '12px',
                       titleSize: '11px',
@@ -465,7 +553,7 @@ const Game = () => {
                     return {
                       cardWidth: '100px',
                       cardHeight: '60px',
-                      slotWidth: '100px',
+                      slotWidth: '60px',
                       slotHeight: '120px',
                       fontSize: '10px',
                       titleSize: '9px',
@@ -484,26 +572,37 @@ const Game = () => {
                 elements.push(
                   <div key="slot-0" className="d-flex flex-column align-items-center">
                     <div 
-                      className={`border-2 p-2 text-center ${
-                        selectedSlot === 0 ? 'bg-opacity-10' : ''
-                      }`}
+                      className="border-2 p-2 text-center"
                       style={{
                         width: dimensions.slotWidth,
                         height: dimensions.slotHeight, 
                         cursor: (showFeedback || gameState.isCompleted) ? 'not-allowed' : 'pointer',
                         borderStyle: 'dashed',
-                        borderColor: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
-                        backgroundColor: selectedSlot === 0 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
+                        borderColor: 'rgba(74, 144, 226, 0.5)',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
                         borderRadius: '12px',
                         opacity: (showFeedback || gameState.isCompleted) ? 0.5 : 1,
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!showFeedback && !gameState.isCompleted) {
+                          e.target.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+                          e.target.style.borderColor = '#4A90E2';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!showFeedback && !gameState.isCompleted) {
+                          e.target.style.backgroundColor = 'rgba(74, 144, 226, 0.1)';
+                          e.target.style.borderColor = 'rgba(74, 144, 226, 0.5)';
+                        }
                       }}
                       onClick={() => !showFeedback && !gameState.isCompleted && handleSlotClick(0)}
                     >
                       <div className="d-flex align-items-center justify-content-center h-100">
                         <div>
-                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
-                          <div style={{color: selectedSlot === 0 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
+                          <div style={{color: 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
+                          <div style={{color: 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
                         </div>
                       </div>
                     </div>
@@ -539,26 +638,37 @@ const Game = () => {
                   elements.push(
                     <div key={`slot-${index + 1}`} className="d-flex flex-column align-items-center">
                       <div 
-                        className={`border-2 p-2 text-center ${
-                          selectedSlot === index + 1 ? 'bg-opacity-10' : ''
-                        }`}
+                        className="border-2 p-2 text-center"
                         style={{
                           width: dimensions.slotWidth,
                           height: dimensions.slotHeight, 
                           cursor: (showFeedback || gameState.isCompleted) ? 'not-allowed' : 'pointer',
                           borderStyle: 'dashed',
-                          borderColor: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.5)',
-                          backgroundColor: selectedSlot === index + 1 ? 'rgba(74, 144, 226, 0.2)' : 'rgba(74, 144, 226, 0.1)',
+                          borderColor: 'rgba(74, 144, 226, 0.5)',
+                          backgroundColor: 'rgba(74, 144, 226, 0.1)',
                           borderRadius: '12px',
                           opacity: (showFeedback || gameState.isCompleted) ? 0.5 : 1,
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!showFeedback && !gameState.isCompleted) {
+                            e.target.style.backgroundColor = 'rgba(74, 144, 226, 0.2)';
+                            e.target.style.borderColor = '#4A90E2';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!showFeedback && !gameState.isCompleted) {
+                            e.target.style.backgroundColor = 'rgba(74, 144, 226, 0.1)';
+                            e.target.style.borderColor = 'rgba(74, 144, 226, 0.5)';
+                          }
                         }}
                         onClick={() => !showFeedback && !gameState.isCompleted && handleSlotClick(index + 1)}
                       >
                         <div className="d-flex align-items-center justify-content-center h-100">
                           <div>
-                            <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
-                            <div style={{color: selectedSlot === index + 1 ? '#4A90E2' : 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
+                            <div style={{color: 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotPlusSize, fontWeight: '300', lineHeight: '1'}}>+</div>
+                            <div style={{color: 'rgba(74, 144, 226, 0.8)', fontSize: dimensions.slotTextSize, fontWeight: '600', marginTop: '4px', fontFamily: 'Poppins, sans-serif'}}>Place<br/>Here</div>
                           </div>
                         </div>
                       </div>
@@ -570,30 +680,7 @@ const Game = () => {
               })()}
             </div>
 
-            {/* Place Card Button */}
-            {selectedSlot !== null && !gameState.isCompleted && (
-              <div className="text-center mt-3">
-                <button 
-                  className="btn btn-lg px-4 py-2 shadow-sm"
-                  style={{
-                    backgroundColor: 'white',
-                    color: 'black',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins, sans-serif',
-                    borderRadius: '20px',
-                    border: 'none',
-                    boxShadow: '0 4px 12px rgba(255, 255, 255, 0.3)',
-                    padding: '10px 25px',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onClick={handlePlaceCard}
-                  disabled={gameState.isCompleted}
-                >
-                  Place Card Here
-                </button>
-              </div>
-            )}
+
           </div>
         </div>
 
