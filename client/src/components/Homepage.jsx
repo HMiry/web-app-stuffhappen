@@ -141,7 +141,7 @@ const Homepage = () => {
           </div>
         </div>
         
-        {/* Feature Cards */}
+        {/* Game Rules Overview */}
         <div className="row g-4 mb-5">
           <div className="col-md-4">
             <div className="text-center text-white">
@@ -156,7 +156,7 @@ const Homepage = () => {
                   color: '#4A90E2'
                 }}
               >
-                Scale of Chaos
+                Start with 3 Cards
               </h3>
               <p 
                 style={{
@@ -165,7 +165,7 @@ const Homepage = () => {
                   opacity: 0.9
                 }}
               >
-                From "mildly annoying" to "life-ending catastrophe" - where does your disaster fit?
+                Begin each game with 3 random disaster cards, each with a "bad luck index" from 1-100. You can see all details of your starting cards.
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ const Homepage = () => {
                   color: '#4A90E2'
                 }}
               >
-                Pressure Cooker
+                30 Seconds to Decide
               </h3>
               <p 
                 style={{
@@ -192,7 +192,7 @@ const Homepage = () => {
                   opacity: 0.9
                 }}
               >
-                Quick thinking under pressure - you've got 30 seconds to decide before chaos strikes!
+                Each round, you get a new disaster card (without seeing its bad luck index). You have 30 seconds to guess where it fits among your cards.
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ const Homepage = () => {
                   color: '#4A90E2'
                 }}
               >
-                Survival Mode
+                Win: 6 Cards | Lose: 3 Mistakes
               </h3>
               <p 
                 style={{
@@ -219,7 +219,7 @@ const Homepage = () => {
                   opacity: 0.9
                 }}
               >
-                Collect 6 disaster cards to prove you're a chaos expert - but 3 wrong moves and you're out!
+                Collect 6 total cards to win! But make 3 wrong guesses and you lose. Guess correctly to keep the card and see its bad luck index.
               </p>
             </div>
           </div>

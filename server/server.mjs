@@ -905,6 +905,50 @@ app.get('/api/users/:id/history/:gameId', async (req, res) => {
   }
 });
 
+// DELETE /api/users/:id/history - Clear user's game history
+app.delete('/api/users/:id/history', isLoggedIn, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    
+    // Verify user can only delete their own history
+    if (req.user.id !== userId) {
+      return res.status(403).json({error: 'You can only delete your own game history'});
+    }
+
+    // Delete game rounds for this user's sessions
+    await new Promise((resolve, reject) => {
+      const sql = `
+        DELETE FROM game_rounds 
+        WHERE game_session_id IN (
+          SELECT id FROM game_sessions WHERE user_id = ?
+        )
+      `;
+      db.run(sql, [userId], function(err) {
+        if (err) reject(err);
+        else resolve(this.changes);
+      });
+    });
+
+    // Delete game sessions for this user
+    const deletedSessions = await new Promise((resolve, reject) => {
+      const sql = 'DELETE FROM game_sessions WHERE user_id = ?';
+      db.run(sql, [userId], function(err) {
+        if (err) reject(err);
+        else resolve(this.changes);
+      });
+    });
+
+    res.json({ 
+      message: 'Game history cleared successfully',
+      deleted_sessions: deletedSessions,
+      timestamp: new Date().toISOString()
+    });
+  } catch(e) {
+    console.error(`ERROR: ${e.message}`);
+    res.status(500).json({error: 'Error clearing game history'});
+  }
+});
+
 // remember to delete these 
 // TODO: Delete the test routes below:
 // - DELETE /api/admin/reset-games

@@ -74,6 +74,41 @@ const Profile = () => {
     }
   };
 
+  const handleClearHistory = async () => {
+    if (!user?.id) return;
+    
+    // Confirm before clearing
+    const confirmed = window.confirm(
+      'Are you sure you want to clear your entire game history? This action cannot be undone.'
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const result = await API.user.clearHistory(user.id);
+      
+      if (result.success) {
+        // Clear the local state
+        setGameHistory([]);
+        setUserStats({
+          gamesPlayed: 0,
+          gamesWon: 0,
+          totalCardsCollected: 0
+        });
+        
+        // Show success message
+        alert('Game history cleared successfully!');
+      } else {
+        // Show error message
+        console.error('Failed to clear history:', result.error);
+        alert('Failed to clear history: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error clearing history:', error);
+      alert('Error clearing history. Please try again.');
+    }
+  };
+
   // Fetch user profile and game history
   React.useEffect(() => {
     const fetchUserData = async () => {
@@ -294,21 +329,38 @@ const Profile = () => {
 
               {/* Game History */}
               <div className="mb-4">
-                <div className="d-flex align-items-center mb-4">
-                  <img 
-                    src="/images/logo1.png" 
-                    alt="Logo" 
-                    className="img-fluid me-3"
-                    style={{ 
-                      maxHeight: '60px',
-                      borderRadius: '16px',
-                      backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                      padding: '12px',
-                      border: '2px solid rgba(74, 144, 226, 0.3)',
-                      boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)'
-                    }}
-                  />
-                  <h4 className="mb-0" style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Game History</h4>
+                <div className="d-flex align-items-center justify-content-between mb-4">
+                  <div className="d-flex align-items-center">
+                    <img 
+                      src="/images/logo1.png" 
+                      alt="Logo" 
+                      className="img-fluid me-3"
+                      style={{ 
+                        maxHeight: '60px',
+                        borderRadius: '16px',
+                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                        padding: '12px',
+                        border: '2px solid rgba(74, 144, 226, 0.3)',
+                        boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)'
+                      }}
+                    />
+                    <h4 className="mb-0" style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Game History</h4>
+                  </div>
+                  {gameHistory.length > 0 && (
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={handleClearHistory}
+                      style={{
+                        fontFamily: 'Poppins, sans-serif',
+                        fontWeight: '500',
+                        fontSize: '12px',
+                        borderRadius: '20px',
+                        padding: '6px 16px'
+                      }}
+                    >
+                      Clear History
+                    </button>
+                  )}
                 </div>
                 
                 {loading ? (

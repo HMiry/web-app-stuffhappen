@@ -226,6 +226,32 @@ const userAPI = {
         error: 'Network error' 
       };
     }
+  },
+
+  // Clear user's game history
+  async clearHistory(userId) {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/users/${userId}/history`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data };
+      } else {
+        const errorData = await response.json();
+        return { 
+          success: false, 
+          error: errorData.error || 'Failed to clear history' 
+        };
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: 'Network error' 
+      };
+    }
   }
 };
 

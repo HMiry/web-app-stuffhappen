@@ -523,42 +523,42 @@ const Game = () => {
                 const getCardDimensions = (cardCount) => {
                   if (cardCount <= 3) {
                     return {
-                      cardWidth: '140px',
-                      cardHeight: '90px',
+                      cardWidth: '180px',
+                      cardHeight: '120px',
                       slotWidth: '80px',
                       slotHeight: '160px',
-                      fontSize: '14px',
-                      titleSize: '12px',
-                      severityIconSize: 14,
-                      severityFontSize: '12px',
+                      fontSize: '16px',
+                      titleSize: '14px',
+                      severityIconSize: 16,
+                      severityFontSize: '14px',
                       slotPlusSize: '28px',
                       slotTextSize: '12px',
                       gap: '15px'
                     };
                   } else if (cardCount <= 5) {
                     return {
-                      cardWidth: '120px',
-                      cardHeight: '75px',
+                      cardWidth: '160px',
+                      cardHeight: '100px',
                       slotWidth: '70px',
                       slotHeight: '140px',
-                      fontSize: '12px',
-                      titleSize: '11px',
-                      severityIconSize: 12,
-                      severityFontSize: '11px',
+                      fontSize: '14px',
+                      titleSize: '13px',
+                      severityIconSize: 14,
+                      severityFontSize: '13px',
                       slotPlusSize: '24px',
                       slotTextSize: '11px',
                       gap: '12px'
                     };
                   } else {
                     return {
-                      cardWidth: '100px',
-                      cardHeight: '60px',
+                      cardWidth: '140px',
+                      cardHeight: '85px',
                       slotWidth: '60px',
                       slotHeight: '120px',
-                      fontSize: '10px',
-                      titleSize: '9px',
-                      severityIconSize: 10,
-                      severityFontSize: '10px',
+                      fontSize: '12px',
+                      titleSize: '11px',
+                      severityIconSize: 12,
+                      severityFontSize: '12px',
                       slotPlusSize: '20px',
                       slotTextSize: '10px',
                       gap: '10px'
