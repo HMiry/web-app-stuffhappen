@@ -111,17 +111,26 @@ const Profile = () => {
                 const detailedResult = await API.user.getDetailedHistory(user.id, game.id);
                 if (detailedResult.success) {
                   const detailedGame = detailedResult.data;
-                  // Filter out round 0 (starting cards) from the round results
-                  const actualGameRounds = (detailedGame.rounds || []).filter(round => round.round > 0);
+                  
+                  // Separate starting cards (round 0) from gameplay rounds (round > 0)
+                  const startingCards = (detailedGame.rounds || []).filter(round => round.round === 0);
+                  const gameplayRounds = (detailedGame.rounds || []).filter(round => round.round > 0);
+                  
+                  // Calculate total cards collected (starting 3 + won cards)
+                  const totalCardsCollected = 3 + (game.cards_won || 0);
+                  
                   return {
                     id: game.id,
                     result: game.game_result,
                     date: new Date(game.time_started).toISOString().split('T')[0],
                     theme: game.theme_name || 'Unknown Theme',
                     cardsWon: game.cards_won || 0,
-                    targetCards: 3, // Cards needed to win (not including starting cards)
-                    rounds: actualGameRounds.length, // Count only actual gameplay rounds (excluding round 0)
-                    roundResults: detailedGame.rounds || []
+                    totalCardsCollected: totalCardsCollected,
+                    targetCards: 6, // Total cards needed to win (3 starting + 3 won)
+                    rounds: gameplayRounds.length, // Count only actual gameplay rounds (excluding round 0)
+                    startingCards: startingCards, // Starting hand cards
+                    gameplayRounds: gameplayRounds, // Cards presented during gameplay
+                    allRounds: detailedGame.rounds || [] // All rounds for reference
                   };
                 }
                 return null;
@@ -329,36 +338,69 @@ const Profile = () => {
                         </div>
                         <div className="text-end">
                           <div className="fw-bold" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: '#4A90E2'}}>
-                            {game.cardsWon}/{game.targetCards} Cards Won
+                            {game.totalCardsCollected}/{game.targetCards} Total Cards
                           </div>
                           <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
-                            {game.rounds} Rounds Played
+                            {game.rounds} Rounds Played • {game.cardsWon} Cards Won
                           </div>
                         </div>
                       </div>
                       
-                      {/* Round Results */}
+                      {/* Complete Card History */}
                       <div className="mt-3">
-                        <div className="small fw-semibold mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: isDark ? 'white' : '#1a1a1a'}}>
-                          Round Details:
+                        <div className="small fw-semibold mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: isDark ? 'white' : '#1a1a1a'}}>
+                          All Cards Involved in Game:
                         </div>
-                        {game.roundResults.filter(round => round.round > 0).map((round, index) => (
-                          <div key={index} className="d-flex align-items-center mb-1">
-                            <div className="me-2" style={{width: '20px'}}>
-                              {round.result === 'correct' ? (
-                                <Check size={16} className="text-success" />
-                              ) : (
-                                <X size={16} className="text-danger" />
-                              )}
-                            </div>
-                            <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
-                              <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>Round {round.round}:</span>{' '}
-                              <span className={round.result === 'correct' ? 'text-success' : 'text-danger'}>
-                                {round.disaster} {round.result === 'correct' ? '✓' : '✗'}
-                              </span>
-                            </div>
+                        
+                        {/* Starting Cards Section */}
+                        <div className="mb-3">
+                          <div className="small fw-semibold mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
+                            Starting Hand (3 cards):
                           </div>
-                        ))}
+                          {game.startingCards && game.startingCards.length > 0 ? (
+                            game.startingCards.map((card, index) => (
+                              <div key={`start-${index}`} className="d-flex align-items-center mb-1 ms-3">
+                                <div className="me-2" style={{width: '20px'}}>
+                                  <div className="rounded-circle bg-secondary" style={{width: '8px', height: '8px'}}></div>
+                                </div>
+                                <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
+                                  <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>{card.disaster}</span>{' '}
+                                  <span className="text-muted">(Initial Card)</span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="small text-muted ms-3">No starting cards data available</div>
+                          )}
+                        </div>
+
+                        {/* Gameplay Rounds Section */}
+                        <div className="mb-2">
+                          <div className="small fw-semibold mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
+                            Cards Presented During Game:
+                          </div>
+                          {game.gameplayRounds && game.gameplayRounds.length > 0 ? (
+                            game.gameplayRounds.map((round, index) => (
+                              <div key={`round-${index}`} className="d-flex align-items-center mb-1 ms-3">
+                                <div className="me-2" style={{width: '20px'}}>
+                                  {round.result === 'correct' ? (
+                                    <Check size={16} className="text-success" />
+                                  ) : (
+                                    <X size={16} className="text-danger" />
+                                  )}
+                                </div>
+                                <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
+                                  <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>{round.disaster}</span>{' '}
+                                  <span className={round.result === 'correct' ? 'text-success' : 'text-danger'}>
+                                    ({round.result === 'correct' ? 'Won' : 'Not Won'} in Round {round.round})
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="small text-muted ms-3">No gameplay rounds completed</div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
