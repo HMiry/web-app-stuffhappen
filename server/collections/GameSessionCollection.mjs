@@ -66,7 +66,7 @@ export const getActiveGameSession = (userId) => {
 // Update game session
 export const updateGameSession = (sessionId, updates) => {
   return new Promise((resolve, reject) => {
-    const allowedFields = ['current_round', 'cards_won', 'wrong_guesses', 'final_score', 'status', 'game_result', 'time_finished'];
+    const allowedFields = ['current_round', 'current_round_start_time', 'cards_won', 'wrong_guesses', 'final_score', 'status', 'game_result', 'time_finished'];
     const updateFields = [];
     const values = [];
     
@@ -127,7 +127,7 @@ export const addGameRound = (sessionId, roundData) => {
 export const getGameRounds = (sessionId) => {
   return new Promise((resolve, reject) => {
     const sql = `
-      SELECT gr.*, c.title as card_title, c.bad_luck_severity
+      SELECT gr.*, c.title as card_title, c.bad_luck_severity, c.image_url as card_image_url
       FROM game_rounds gr
       JOIN cards c ON gr.card_id = c.id
       WHERE gr.game_session_id = ?
@@ -218,22 +218,7 @@ export const getDetailedGameHistory = (userId, gameId) => {
   });
 };
 
-// Simple function to ensure user profile exists (no stats tracking)
-export const ensureUserProfile = (userId) => {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      INSERT OR IGNORE INTO user_profiles (user_id) VALUES (?)
-    `;
-    
-    db.run(sql, [userId], function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-};
+
 
 // End game session
 export const endGameSession = (sessionId, gameResult) => {

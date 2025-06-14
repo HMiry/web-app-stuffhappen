@@ -41,7 +41,7 @@ const Themes = () => {
               requires_login: theme.requires_login,
               loginRequired: theme.requires_login && !isLoggedIn,
               lockMessage: theme.requires_login && !isLoggedIn ? 'Login Required' : (!theme.is_active ? 'Coming Soon' : null),
-              backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg`,
+              backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62687.jpeg`,
               limitation: (!isLoggedIn && theme.theme_key === 'travel') ? 'Demo: 1 round only' : null
             }));
           

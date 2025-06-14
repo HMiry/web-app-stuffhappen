@@ -40,11 +40,8 @@ const Profile = () => {
         // Update successful - close modal
     setIsEditing(false);
         
-        // Optionally refresh the user data
-        const profileResult = await API.user.getProfile(user.id);
-        if (profileResult.success) {
-          setUserInfo(profileResult.data);
-        }
+        // Refresh user data from context (no separate profile needed)
+        setUserInfo(user);
       } else {
         // Show error message
         console.error('Failed to update profile:', result.error);
@@ -59,19 +56,7 @@ const Profile = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     // Reset form to original values
-    if (user?.id) {
-      const fetchUserData = async () => {
-        try {
-          const profileResult = await API.user.getProfile(user.id);
-          if (profileResult.success) {
-            setUserInfo(profileResult.data);
-          }
-        } catch (error) {
-          console.error('Error resetting user data:', error);
-        }
-      };
-      fetchUserData();
-    }
+    setUserInfo(user);
   };
 
   const handleClearHistory = async () => {
@@ -116,11 +101,8 @@ const Profile = () => {
       
       setLoading(true);
       try {
-        // Fetch user profile
-        const profileResult = await API.user.getProfile(user.id);
-        if (profileResult.success) {
-          setUserInfo(profileResult.data);
-        }
+        // Use existing user data (no separate profile needed)
+        setUserInfo(user);
 
         // Fetch game history
         const historyResult = await API.user.getHistory(user.id);

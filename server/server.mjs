@@ -4,10 +4,10 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {check, validationResult} from 'express-validator';
-import {listUsers, getUser, addUser, authenticateUser, getUserWithProfile, updateUser, deleteUser} from './collections/UserCollection.mjs';
+import {listUsers, getUser, addUser, authenticateUser, updateUser, deleteUser} from './collections/UserCollection.mjs';
 import {listGames, getGame, addGame, updateGameStatus, getGamesByCreator, joinGame, getGamePlayers} from './collections/GameCollection.mjs';
 import {listThemes, listActiveThemes, getTheme, getThemeByKey, getThemeCards, getRandomThemeCards, addTheme, updateTheme, deleteTheme, getThemeStats} from './collections/ThemeCollection.mjs';
-import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory, ensureUserProfile, endGameSession} from './collections/GameSessionCollection.mjs';
+import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory, endGameSession} from './collections/GameSessionCollection.mjs';
 import {listCards, getCard, getRandomCards, getCardsByIndexRange, getSimilarCards, getCardCount} from './collections/CardCollection.mjs';
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
@@ -97,7 +97,7 @@ app.get('/api/users', (req, res) => {
 // GET /api/users/<id>
 app.get('/api/users/:id', async (request, response) => {
   try {
-    const result = await getUserWithProfile(request.params.id);
+    const result = await getUser(request.params.id);
     if(result.error) {
       response.status(404).json(result);
     } else {
@@ -597,7 +597,7 @@ app.get('/api/game-sessions/:id/rounds', async (req, res) => {
   }
 });
 
-// GET /api/game-sessions/:id/next-card - Get random card for current round
+// GET /api/game-sessions/:id/next-card - Get consistent card for current round
 app.get('/api/game-sessions/:id/next-card', async (req, res) => {
   try {
     const sessionId = req.params.id;
@@ -610,30 +610,51 @@ app.get('/api/game-sessions/:id/next-card', async (req, res) => {
       return res.status(404).json(session);
     }
     
-    // Get already used cards to exclude them
+    // Get all existing rounds
     const existingRounds = await getGameRounds(sessionId);
     const usedCardIds = existingRounds.map(r => r.card_id);
     
-    // Get a random card from the theme that hasn't been used
+    // Get all theme cards and sort them consistently
     const allThemeCards = await getThemeCards(session.theme_id);
-    const availableCards = allThemeCards.filter(card => !usedCardIds.includes(card.id));
+    const availableCards = allThemeCards.filter(card => !usedCardIds.includes(card.id))
+                                        .sort((a, b) => a.id - b.id); // Sort by ID for consistency
     
     if (availableCards.length === 0) {
       return res.status(400).json({error: 'No more cards available for this theme'});
     }
     
-    // Select random card from available ones
-    const randomIndex = Math.floor(Math.random() * availableCards.length);
-    const nextCard = availableCards[randomIndex];
+    // Use deterministic selection based on session ID and current round
+    // This ensures the same card is always returned for the same round
+    const seedValue = parseInt(sessionId) + (session.current_round * 1000);
+    const cardIndex = seedValue % availableCards.length;
+    const nextCard = availableCards[cardIndex];
     
-    // Return card without revealing severity
+    // Update round start time if this is a new round
+    if (!session.current_round_start_time) {
+      await updateGameSession(sessionId, {
+        current_round_start_time: new Date().toISOString()
+      });
+    }
+    
+    // Calculate remaining time for persistent timer
+    let remainingTime = 30; // Default 30 seconds
+    if (session.current_round_start_time) {
+      const startTime = new Date(session.current_round_start_time);
+      const now = new Date();
+      const elapsedSeconds = Math.floor((now - startTime) / 1000);
+      remainingTime = Math.max(0, 30 - elapsedSeconds);
+    }
+    
+    // Return card without revealing severity + timer info
     res.json({
       id: nextCard.id,
       title: nextCard.title,
       description: nextCard.description,
       image_url: nextCard.image_url,
       theme_id: nextCard.theme_id,
-      demo: session.user_id === null // Mark as demo if no user
+      demo: session.user_id === null, // Mark as demo if no user
+      remaining_time: remainingTime, // Add persistent timer
+      round_number: session.current_round
       // Note: bad_luck_severity is NOT included - that's revealed after guess
     });
   } catch(e) {
@@ -770,6 +791,7 @@ app.post('/api/game-sessions/:id/rounds', [
     // Update game session
     const updates = {
       current_round: round_number + 1,
+      current_round_start_time: null, // Reset timer for next round
       cards_won: isCorrect ? session.cards_won + 1 : session.cards_won,
       wrong_guesses: isCorrect ? session.wrong_guesses : session.wrong_guesses + 1,
       final_score: session.final_score + pointsEarned
@@ -853,7 +875,7 @@ app.post('/api/game-sessions/:id/end', isLoggedIn, [
 
   try {
     await endGameSession(req.params.id, req.body.game_result);
-    await ensureUserProfile(req.user.id);
+
     res.json({message: 'Game session ended successfully'});
   } catch(e) {
     console.error(`ERROR: ${e.message}`);
@@ -863,20 +885,7 @@ app.post('/api/game-sessions/:id/end', isLoggedIn, [
 
 /* USER PROFILE & HISTORY ROUTES */
 
-// GET /api/users/:id/profile
-app.get('/api/users/:id/profile', async (req, res) => {
-  try {
-    const profile = await getUserWithProfile(req.params.id);
-    if(profile.error) {
-      res.status(404).json(profile);
-    } else {
-      res.json(profile);
-    }
-  } catch(e) {
-    console.error(`ERROR: ${e.message}`);
-    res.status(500).json({error: 'Error fetching user profile'});
-  }
-});
+
 
 // GET /api/users/:id/history
 app.get('/api/users/:id/history', async (req, res) => {
@@ -998,7 +1007,7 @@ app.delete('/api/admin/reset-games', async (req, res) => {
 // DELETE /api/admin/reset-all - Nuclear option: clear everything except themes/cards
 app.delete('/api/admin/reset-all', async (req, res) => {
   try {
-    const tables = ['game_rounds', 'game_sessions', 'user_profiles', 'users'];
+    const tables = ['game_rounds', 'game_sessions', 'users'];
     
     for (const table of tables) {
       await new Promise((resolve, reject) => {
@@ -1011,7 +1020,7 @@ app.delete('/api/admin/reset-all', async (req, res) => {
     }
     
     await new Promise((resolve, reject) => {
-      db.run('DELETE FROM sqlite_sequence WHERE name IN ("users", "game_sessions", "game_rounds", "user_profiles")', function(err) {
+      db.run('DELETE FROM sqlite_sequence WHERE name IN ("users", "game_sessions", "game_rounds")', function(err) {
         if (err) reject(err);
         else resolve(this.changes);
       });

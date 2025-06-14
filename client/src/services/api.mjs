@@ -124,30 +124,7 @@ const authAPI = {
 
 // User API Methods
 const userAPI = {
-  // Get user profile
-  async getProfile(userId) {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/users/${userId}/profile`, {
-        credentials: 'include',
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      } else {
-        const errorData = await response.json();
-        return { 
-          success: false, 
-          error: errorData.error || 'Failed to get profile' 
-        };
-      }
-    } catch (error) {
-      return { 
-        success: false, 
-        error: 'Network error' 
-      };
-    }
-  },
 
   // Update user profile
   async updateProfile(userId, profileData) {
@@ -746,18 +723,7 @@ const cardAPI = {
   }
 };
 
-// Demo API Methods
-const demoAPI = {
-  // Start demo game
-  async startDemo(themeKey = 'university') {
-    return gameAPI.startGame(themeKey);
-  },
 
-  // Get demo content
-  async getDemoContent() {
-    return themeAPI.getByKey('university');
-  }
-};
 
 // Export all API methods
 const API = {
@@ -765,11 +731,10 @@ const API = {
   user: userAPI,
   game: gameAPI,
   theme: themeAPI,
-  card: cardAPI,
-  demo: demoAPI
+  card: cardAPI
 };
 
 export default API;
 
 // Export individual APIs for convenience
-export { authAPI, userAPI, gameAPI, themeAPI, cardAPI, demoAPI }; 
+export { authAPI, userAPI, gameAPI, themeAPI, cardAPI }; 

@@ -76,6 +76,7 @@ const initDatabase = () => {
         status VARCHAR(20) DEFAULT 'active',
         total_rounds INTEGER DEFAULT 6,
         current_round INTEGER DEFAULT 1,
+        current_round_start_time DATETIME,
         cards_won INTEGER DEFAULT 0,
         wrong_guesses INTEGER DEFAULT 0,
         max_wrong_guesses INTEGER DEFAULT 3,
@@ -114,24 +115,9 @@ const initDatabase = () => {
                 return;
               }
 
-    // User profiles table (simple profile info only)
-              db.exec(`
-      CREATE TABLE IF NOT EXISTS user_profiles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER UNIQUE NOT NULL,
-        bio TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-              `, (err) => {
-                if (err) {
-                  reject(err);
-                  return;
-                }
-
                   console.log('✅ Database initialized successfully!');
-                  console.log('📋 Created tables: users, themes, cards, game_sessions, game_rounds, user_profiles');
+                  console.log('📋 Created tables: users, themes, cards, game_sessions, game_rounds');
                   resolve();
-              });
             });
           });
         });

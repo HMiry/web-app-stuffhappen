@@ -91,11 +91,39 @@ const Game = () => {
   // Initialize game data
   useEffect(() => {
     const initializeGame = async () => {
+      console.log('🎮 Game initialization started');
+      console.log('gameSession from navigation:', gameSession);
+      console.log('isLoggedIn:', isLoggedIn);
+      
+      // Always check for active game first (for resume functionality)
+      if (isLoggedIn) {
+        console.log('🔍 Checking for active game session...');
+        try {
+          const activeGameResult = await API.game.getActiveGame();
+          console.log('Active game API result:', activeGameResult);
+          
+          if (activeGameResult.success && activeGameResult.data) {
+            console.log('✅ Found active game session, resuming...');
+            // Resume the active game (ignoring navigation state)
+            await resumeActiveGame(activeGameResult.data);
+            return;
+          } else {
+            console.log('ℹ️ No active game found, will use navigation state or redirect');
+          }
+        } catch (error) {
+          console.error('❌ Error checking for active game:', error);
+        }
+      }
+
+      // If no active game to resume, check if we have gameSession from navigation
       if (!gameSession) {
+        console.log('❌ No gameSession from navigation and no active game, redirecting to themes');
         navigate('/themes');
         return;
       }
 
+      console.log('✅ Have gameSession from navigation, initializing new game...');
+      // Initialize new game from navigation state
       try {
         // Get starting cards from the game session
         if (gameSession.cards) {
@@ -113,6 +141,13 @@ const Game = () => {
         const nextCardResult = await API.game.getNextCard(gameSession.session_id);
         if (nextCardResult.success) {
           setCurrentCard(nextCardResult.data);
+          
+          // Use persistent timer from server
+          const remainingTime = nextCardResult.data.remaining_time || 30;
+          setGameState(prev => ({
+            ...prev,
+            timeLeft: remainingTime
+          }));
         }
 
         setGameState(prev => ({
@@ -126,8 +161,142 @@ const Game = () => {
       }
     };
 
+    const resumeActiveGame = async (activeSession) => {
+      console.log('🔄 Starting active game resume...');
+      try {
+        setGameState(prev => ({
+          ...prev,
+          sessionId: activeSession.id,
+          loading: true
+        }));
+
+        console.log('📊 Getting session details for ID:', activeSession.id);
+        // Get the game session details
+        const sessionResult = await API.game.getGameSession(activeSession.id);
+        console.log('Session details result:', sessionResult);
+        
+        if (!sessionResult.success) {
+          throw new Error('Failed to get session details');
+        }
+
+        const session = sessionResult.data;
+        console.log('📋 Session data:', session);
+        
+        console.log('🎲 Getting game rounds...');
+        // Get all completed rounds to reconstruct game state
+        const roundsResult = await API.game.getGameRounds(activeSession.id);
+        console.log('Rounds result:', roundsResult);
+        
+        if (!roundsResult.success) {
+          throw new Error('Failed to get game rounds');
+        }
+
+        const rounds = roundsResult.data;
+        console.log('📝 All rounds:', rounds);
+        
+        // Separate starting cards (round 0) from gameplay rounds
+        const startingRounds = rounds.filter(r => r.round_number === 0);
+        const gameplayRounds = rounds.filter(r => r.round_number > 0);
+        
+        console.log('🏁 Starting rounds:', startingRounds);
+        console.log('🎯 Gameplay rounds:', gameplayRounds);
+        
+        // Calculate current game state
+        const cardsWon = gameplayRounds.filter(r => r.is_correct).length;
+        const wrongGuesses = gameplayRounds.filter(r => !r.is_correct).length;
+        // Use the current_round from the database session, not calculated
+        const currentRound = session.current_round;
+        
+        console.log('📊 Game state - Won:', cardsWon, 'Wrong:', wrongGuesses, 'Current Round:', currentRound);
+
+        // Build player cards array (starting cards + won cards in order)
+        const playerCardsArray = [];
+        
+        // Add starting cards first
+        for (const round of startingRounds) {
+          playerCardsArray.push({
+            id: round.card_id,
+            title: round.card_title,
+            bad_luck_severity: round.bad_luck_severity,
+            severity: round.bad_luck_severity,
+            image_url: round.card_image_url
+          });
+        }
+
+        // Add won cards in the order they were won
+        for (const round of gameplayRounds.filter(r => r.is_correct)) {
+          playerCardsArray.push({
+            id: round.card_id,
+            title: round.card_title,
+            bad_luck_severity: round.bad_luck_severity,
+            severity: round.bad_luck_severity,
+            image_url: round.card_image_url
+          });
+        }
+
+        console.log('🃏 Rebuilt player cards:', playerCardsArray);
+        setPlayerCards(playerCardsArray);
+
+        // Get next card to place (if game isn't over)
+        if (cardsWon < 3 && wrongGuesses < 3) {
+          console.log('🎴 Getting next card to place...');
+          const nextCardResult = await API.game.getNextCard(activeSession.id);
+          console.log('Next card result:', nextCardResult);
+          if (nextCardResult.success) {
+            setCurrentCard(nextCardResult.data);
+            console.log('🎴 Next card set:', nextCardResult.data);
+            
+            // Use persistent timer from server
+            const remainingTime = nextCardResult.data.remaining_time || 30;
+            console.log('⏰ Setting persistent timer to:', remainingTime);
+            setGameState(prev => ({
+              ...prev,
+              timeLeft: remainingTime
+            }));
+          }
+        }
+
+        // Update game state (don't override timeLeft - it was set correctly above)
+        setGameState(prev => ({
+          ...prev,
+          sessionId: activeSession.id,
+          cardsWon,
+          wrongGuesses,
+          round: currentRound,
+          gameStarted: true,
+          loading: false,
+          isCompleted: (cardsWon >= 3 || wrongGuesses >= 3)
+        }));
+
+        // If game is already completed, show completion message
+        if (cardsWon >= 3) {
+          setGameCompletionMessage({
+            type: 'won',
+            title: 'Game Complete! 🎉',
+            message: `You won with ${cardsWon} cards!`,
+            icon: '🏆'
+          });
+          setShowGameCompletion(true);
+        } else if (wrongGuesses >= 3) {
+          setGameCompletionMessage({
+            type: 'lost',
+            title: 'Game Over',
+            message: `Too many wrong guesses. Better luck next time!`,
+            icon: '💔'
+          });
+          setShowGameCompletion(true);
+        }
+
+        console.log(`✅ Successfully resumed game: Round ${currentRound}, Won: ${cardsWon}, Wrong: ${wrongGuesses}`);
+        
+      } catch (error) {
+        console.error('❌ Error resuming active game:', error);
+        navigate('/themes');
+      }
+    };
+
     initializeGame();
-  }, [gameSession, navigate]);
+  }, [gameSession, navigate, isLoggedIn]);
 
   // Timer countdown
   useEffect(() => {
@@ -156,8 +325,6 @@ const Game = () => {
     // Submit as timeout (wrong answer)
     await submitMove(1, true); // Any position, but marked as timeout
   };
-
-
 
   const submitMove = async (position, isTimeout = false) => {
     if (gameState.isCompleted) {
@@ -463,42 +630,53 @@ const Game = () => {
       <div style={{paddingTop: '80px'}}>
         <div className="container py-4">
         {/* Current Question */}
-        <div className="row mb-4">
+        <div className="row mb-3">
           <div className="col-12">
-            <div className="card border-0 shadow-lg" style={{backgroundColor: isDark ? '#4A90E2' : '#4A90E2', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px'}}>
-              <div className="card-body p-5">
-                <div className="d-flex align-items-center justify-content-between mb-4">
+            <div className="card border-0 shadow-sm" style={{
+              backgroundColor: isDark ? 'rgba(45, 45, 45, 0.95)' : 'rgba(248, 250, 252, 0.95)', 
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`, 
+              borderRadius: '16px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center justify-content-between mb-3">
                   <div className="d-flex align-items-center">
-                    <Target className="me-3" style={{color: 'white'}} size={36} />
-                      <h4 className="mb-0" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Where does this disaster belong?</h4>
+                    <Target className="me-2" style={{color: isDark ? '#4A90E2' : '#2563eb'}} size={24} />
+                      <h5 className="mb-0" style={{color: isDark ? 'white' : '#1e293b', fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '16px'}}>Where does this disaster belong?</h5>
                   </div>
                   <div className="d-flex align-items-center">
-                    <Timer className="me-2" style={{color: 'white'}} size={24} />
-                      <span className="fw-bold" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.timeLeft}s</span>
-                      <div className="progress ms-3" style={{width: '100px', height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.2)'}}>
+                    <Timer className="me-2" style={{color: isDark ? '#4A90E2' : '#2563eb'}} size={20} />
+                      <span className="fw-bold" style={{color: isDark ? '#4A90E2' : '#2563eb', fontFamily: 'Poppins, sans-serif', fontWeight: '700'}}>{gameState.timeLeft}s</span>
+                      <div className="progress ms-2" style={{width: '80px', height: '6px', borderRadius: '3px', backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}}>
                         <div 
                           className="progress-bar" 
-                          style={{backgroundColor: 'white', width: `${(gameState.timeLeft / 30) * 100}%`, borderRadius: '4px'}}
+                          style={{backgroundColor: isDark ? '#4A90E2' : '#2563eb', width: `${(gameState.timeLeft / 30) * 100}%`, borderRadius: '3px'}}
                         ></div>
                       </div>
                   </div>
                 </div>
                 
                 <div className="text-center">
-                  <div className="card d-inline-block shadow-lg" style={{maxWidth: '400px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '2px solid rgba(255,255,255,0.3)'}}>
+                  <div className="card d-inline-block shadow-sm" style={{
+                    maxWidth: '300px', 
+                    borderRadius: '12px', 
+                    overflow: 'hidden', 
+                    backgroundColor: isDark ? '#2563eb' : '#3b82f6', 
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}`
+                  }}>
                     <img 
                       src={currentCard.image_url || currentCard.image} 
                       className="card-img-top"
                       alt="Current disaster"
-                      style={{height: '220px', objectFit: 'cover', cursor: 'pointer'}}
+                      style={{height: '160px', objectFit: 'cover', cursor: 'pointer'}}
                       onClick={() => {
                         // Optional: Could add image zoom functionality here
                       }}
                     />
-                    <div className="card-body p-4" style={{minHeight: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                      <h5 className="card-title mb-0 text-center" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '17px', lineHeight: '1.4', wordWrap: 'break-word', hyphens: 'auto'}}>
+                    <div className="card-body p-3" style={{minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                      <h6 className="card-title mb-0 text-center" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '14px', lineHeight: '1.3', wordWrap: 'break-word', hyphens: 'auto'}}>
                         {currentCard.title}
-                      </h5>
+                      </h6>
                     </div>
                   </div>
                 </div>
@@ -621,7 +799,7 @@ const Game = () => {
                     <div key={`card-${index}`} className="d-flex flex-column align-items-center">
                       <div className="card shadow-sm" style={{width: dimensions.cardWidth, borderRadius: '12px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
                         <img 
-                          src={card.image_url || card.image || "/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg"} 
+                          src={card.image_url || card.image || "/images/freepik__the-style-is-candid-image-photography-with-natural__62687.jpeg"} 
                           className="card-img-top"
                           alt={card.title}
                           style={{height: dimensions.cardHeight, objectFit: 'cover'}}

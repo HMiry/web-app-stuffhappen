@@ -200,30 +200,7 @@ const Login = () => {
                     </div>
                   </div>
 
-                  {/* Remember Me & Forgot Password */}
-                  <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="rememberMe"
-                        style={{
-                          borderColor: '#d1d5db',
-                          accentColor: '#4A90E2'
-                        }}
-                      />
-                      <label className="form-check-label text-muted" htmlFor="rememberMe">
-                        Remember me
-                      </label>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-link p-0"
-                      style={{color: '#4A90E2', textDecoration: 'none'}}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+
 
                   {/* Login Button */}
                   <button

@@ -169,34 +169,4 @@ export const emailExists = (email) => {
   });
 };
 
-// get user with profile
-export const getUserWithProfile = (userId) => {
-  return new Promise((resolve, reject) => {
-    const sql = `SELECT u.*, p.bio
-                 FROM users u
-                 LEFT JOIN user_profiles p ON u.id = p.user_id
-                 WHERE u.id = ?`;
-    db.get(sql, [userId], (err, row) => {
-      if (err) {
-        reject(err);
-      } else if (!row) {
-        resolve({error: 'User not found'});
-      } else {
-        resolve({
-          id: row.id,
-          username: row.username,
-          email: row.email,
-          name: row.name,
-          university: row.university,
-          major: row.major,
-          avatar_url: row.avatar_url,
-          role: row.role,
-          created_at: row.created_at,
-          profile: {
-            bio: row.bio
-          }
-        });
-      }
-    });
-  });
-} 
+ 
