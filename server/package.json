@@ -1,7 +1,7 @@
 {
-  "name": "stuff-happens-arena-server",
+  "name": "stuff-happens-server",
   "version": "1.0.0",
-  "description": "Backend API server for Stuff Happens Arena - following qa-server pattern",
+  "description": "Backend API server for Stuff Happens - following qa-server pattern",
   "type": "module",
   "main": "server.mjs",
   "scripts": {
@@ -16,7 +16,7 @@
     "sqlite",
     "api",
     "backend",
-    "arena"
+    "stuffhappens"
   ],
   "author": "Luigi De Russis",
   "license": "ISC",

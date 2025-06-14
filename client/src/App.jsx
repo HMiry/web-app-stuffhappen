@@ -17,7 +17,7 @@ const LoadingScreen = () => (
       <div className="spinner-border text-primary mb-3" role="status" style={{width: '3rem', height: '3rem'}}>
         <span className="visually-hidden">Loading...</span>
       </div>
-      <h5 className="text-muted">Loading Stuff Happens Arena...</h5>
+                      <h5 className="text-muted">Loading Stuff Happens ...</h5>
     </div>
   </div>
 );
