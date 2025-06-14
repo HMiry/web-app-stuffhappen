@@ -29,7 +29,6 @@ build/
 .env.test
 
 # Database files
-*.db
 *.sqlite
 *.sqlite3
 server/db/*.db
