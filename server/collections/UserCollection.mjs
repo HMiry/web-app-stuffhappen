@@ -124,8 +124,8 @@ export const authenticateUser = async (username, password) => {
       }
       else {
         try {
-          const user = {id: row.id, username: row.username, email: row.email, name: row.name};
-          
+        const user = {id: row.id, username: row.username, email: row.email, name: row.name};
+        
           // Compare password with bcrypt
           const isValid = await bcrypt.compare(password, row.password_hash);
           if (!isValid) {

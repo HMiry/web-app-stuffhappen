@@ -485,15 +485,20 @@ const Game = () => {
                 </div>
                 
                 <div className="text-center">
-                  <div className="card d-inline-block shadow-sm" style={{maxWidth: '300px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '1px solid rgba(255,255,255,0.2)'}}>
+                  <div className="card d-inline-block shadow-lg" style={{maxWidth: '400px', borderRadius: '20px', overflow: 'hidden', backgroundColor: isDark ? '#2563eb' : '#3b82f6', border: '2px solid rgba(255,255,255,0.3)'}}>
                     <img 
                       src={currentCard.image_url || currentCard.image} 
                       className="card-img-top"
                       alt="Current disaster"
-                      style={{height: '150px', objectFit: 'cover'}}
+                      style={{height: '220px', objectFit: 'cover', cursor: 'pointer'}}
+                      onClick={() => {
+                        // Optional: Could add image zoom functionality here
+                      }}
                     />
-                    <div className="card-body p-3">
-                      <h6 className="card-title mb-0" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>{currentCard.title}</h6>
+                    <div className="card-body p-4" style={{minHeight: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                      <h5 className="card-title mb-0 text-center" style={{color: 'white', fontFamily: 'Poppins, sans-serif', fontWeight: '600', fontSize: '17px', lineHeight: '1.4', wordWrap: 'break-word', hyphens: 'auto'}}>
+                        {currentCard.title}
+                      </h5>
                     </div>
                   </div>
                 </div>
@@ -624,8 +629,8 @@ const Game = () => {
                         <div className="card-body p-2">
                           <h6 className="card-title small mb-1" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: 'white', fontSize: dimensions.titleSize, lineHeight: '1.1'}}>{card.title}</h6>
                           <div className="d-flex align-items-center justify-content-center">
-                            <AlertTriangle className="text-danger me-1" size={dimensions.severityIconSize} />
-                            <span className="fw-bold text-danger" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: dimensions.severityFontSize}}>
+                            <AlertTriangle className="me-1" style={{color: '#fbbf24'}} size={dimensions.severityIconSize} />
+                            <span className="fw-bold" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '700', fontSize: dimensions.severityFontSize, color: '#fbbf24', textShadow: '0 1px 2px rgba(0,0,0,0.3)'}}>
                               {Math.round(card.bad_luck_severity || card.severity || 0)}
                             </span>
                           </div>

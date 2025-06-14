@@ -482,8 +482,8 @@ app.post('/api/game-sessions', async (req, res) => {
     // Check if theme requires login
     if (theme.requires_login && !req.isAuthenticated()) {
       return res.status(401).json({
-        error: 'This theme requires login. Only University Life theme is available for demo play.',
-        allowed_demo_themes: ['university']
+        error: 'This theme requires login. Only Travel & Adventure theme is available for demo play.',
+        allowed_demo_themes: ['travel']
       });
     }
 
@@ -491,11 +491,11 @@ app.post('/api/game-sessions', async (req, res) => {
     const userId = req.isAuthenticated() ? req.user.id : null;
     const sessionId = await createGameSession(userId, theme.id);
     
-    // For anonymous users, only allow university theme
-    if (!req.isAuthenticated() && theme_key !== 'university') {
+    // For anonymous users, only allow travel theme
+    if (!req.isAuthenticated() && theme_key !== 'travel') {
       return res.status(403).json({
-        error: 'Anonymous users can only play University Life theme as demo.',
-        allowed_theme: 'university'
+        error: 'Anonymous users can only play Travel & Adventure theme as demo.',
+        allowed_theme: 'travel'
       });
     }
     

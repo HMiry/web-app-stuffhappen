@@ -7,7 +7,7 @@ export const listThemes = () => {
       SELECT id, theme_key, name, description, icon, color, background_image, 
              category, difficulty_level, is_active, requires_login, created_at
       FROM themes 
-      ORDER BY difficulty_level ASC, name ASC
+      ORDER BY id ASC
     `;
     
     db.all(sql, [], (err, rows) => {
@@ -28,7 +28,7 @@ export const listActiveThemes = () => {
              category, difficulty_level, is_active, requires_login, created_at
       FROM themes 
       WHERE is_active = 1
-      ORDER BY difficulty_level ASC, name ASC
+      ORDER BY id ASC
     `;
     
     db.all(sql, [], (err, rows) => {

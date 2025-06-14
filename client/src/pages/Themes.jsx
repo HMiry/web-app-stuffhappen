@@ -31,7 +31,7 @@ const Themes = () => {
         
         if (result.success) {
           // Transform server data to match component expectations
-                      const transformedThemes = result.data.map(theme => ({
+          const transformedThemes = result.data.map(theme => ({
               id: theme.theme_key,
               name: theme.name,
               icon: iconMap[theme.theme_key] || GraduationCap,
@@ -42,7 +42,7 @@ const Themes = () => {
               loginRequired: theme.requires_login && !isLoggedIn,
               lockMessage: theme.requires_login && !isLoggedIn ? 'Login Required' : (!theme.is_active ? 'Coming Soon' : null),
               backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62682.jpeg`,
-              limitation: (!isLoggedIn && theme.theme_key === 'university') ? 'Demo: 1 round only' : null
+              limitation: (!isLoggedIn && theme.theme_key === 'travel') ? 'Demo: 1 round only' : null
             }));
           
           setThemes(transformedThemes);
@@ -251,11 +251,9 @@ const Themes = () => {
                     cursor: isClickable ? 'pointer' : 'not-allowed',
                     borderColor: selectedTheme === theme.id && isClickable ? '#4A90E2' : '#e5e7eb',
                     opacity: isLocked ? 0.6 : 1,
-                    backgroundImage: `url(${theme.backgroundImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
                     borderRadius: '24px',
-                    boxShadow: selectedTheme === theme.id && isClickable ? '0 8px 25px rgba(37, 99, 235, 0.25)' : '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    boxShadow: selectedTheme === theme.id && isClickable ? '0 8px 25px rgba(37, 99, 235, 0.25)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    minHeight: '280px'
                   }}
                   onClick={() => {
                     if (isClickable) {
@@ -263,12 +261,28 @@ const Themes = () => {
                     }
                   }}
                 >
+                  {/* High-quality background image */}
+                  <img 
+                    src={theme.backgroundImage}
+                    alt={theme.name}
+                    className="position-absolute top-0 start-0 w-100 h-100"
+                    style={{
+                      objectFit: 'cover',
+                      imageRendering: 'crisp-edges',
+                      WebkitImageRendering: 'crisp-edges',
+                      MozImageRendering: 'crisp-edges',
+                      msImageRendering: 'crisp-edges',
+                      zIndex: 0
+                    }}
+                  />
+
                   {/* Background overlay */}
                   <div 
                     className="position-absolute top-0 start-0 w-100 h-100"
                     style={{
-                      backgroundColor: theme.isActive ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)',
-                      backdropFilter: 'blur(1px)'
+                      backgroundColor: theme.isActive ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
+                      backdropFilter: 'blur(0px)',
+                      zIndex: 1
                     }}
                   ></div>
 
@@ -289,7 +303,7 @@ const Themes = () => {
                     </div>
                   )}
                   
-                  <div className="card-body p-3 text-center position-relative" style={{ zIndex: 1 }}>
+                  <div className="card-body p-3 text-center position-relative" style={{ zIndex: 2 }}>
                     <div className="mb-2">
                       <div 
                         className="rounded-circle d-inline-flex align-items-center justify-content-center"
@@ -317,7 +331,7 @@ const Themes = () => {
                       )}
                     </div>
                     
-                    {/* Show limitation for University theme when not logged in */}
+                    {/* Show limitation for Travel theme when not logged in */}
                     {theme.limitation && (
                       <div className="badge bg-success mb-3" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '500', fontSize: '12px' }}>
                         {theme.limitation}
@@ -334,7 +348,7 @@ const Themes = () => {
                         Coming Soon
                       </p>
                     )}
-                    
+
                     {/* Show login required message if theme needs login */}
                     {theme.isActive && theme.requires_login && !isLoggedIn && (
                       <p className="small text-white fst-italic mb-0" style={{ opacity: 0.9, fontFamily: 'Poppins, sans-serif', fontWeight: '500' }}>

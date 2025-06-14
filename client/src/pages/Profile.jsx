@@ -38,7 +38,7 @@ const Profile = () => {
       
       if (result.success) {
         // Update successful - close modal
-        setIsEditing(false);
+    setIsEditing(false);
         
         // Optionally refresh the user data
         const profileResult = await API.user.getProfile(user.id);
@@ -331,20 +331,20 @@ const Profile = () => {
               <div className="mb-4">
                 <div className="d-flex align-items-center justify-content-between mb-4">
                   <div className="d-flex align-items-center">
-                    <img 
-                      src="/images/logo1.png" 
-                      alt="Logo" 
-                      className="img-fluid me-3"
-                      style={{ 
-                        maxHeight: '60px',
-                        borderRadius: '16px',
-                        backgroundColor: 'rgba(74, 144, 226, 0.1)',
-                        padding: '12px',
-                        border: '2px solid rgba(74, 144, 226, 0.3)',
-                        boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)'
-                      }}
-                    />
-                    <h4 className="mb-0" style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Game History</h4>
+                  <img 
+                    src="/images/logo1.png" 
+                    alt="Logo" 
+                    className="img-fluid me-3"
+                    style={{ 
+                      maxHeight: '60px',
+                      borderRadius: '16px',
+                      backgroundColor: 'rgba(74, 144, 226, 0.1)',
+                      padding: '12px',
+                      border: '2px solid rgba(74, 144, 226, 0.3)',
+                      boxShadow: '0 4px 12px rgba(74, 144, 226, 0.15)'
+                    }}
+                  />
+                  <h4 className="mb-0" style={{color: '#4A90E2', fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>Game History</h4>
                   </div>
                   {gameHistory.length > 0 && (
                     <button
@@ -434,20 +434,20 @@ const Profile = () => {
                           {game.gameplayRounds && game.gameplayRounds.length > 0 ? (
                             game.gameplayRounds.map((round, index) => (
                               <div key={`round-${index}`} className="d-flex align-items-center mb-1 ms-3">
-                                <div className="me-2" style={{width: '20px'}}>
-                                  {round.result === 'correct' ? (
-                                    <Check size={16} className="text-success" />
-                                  ) : (
-                                    <X size={16} className="text-danger" />
-                                  )}
-                                </div>
-                                <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
+                            <div className="me-2" style={{width: '20px'}}>
+                              {round.result === 'correct' ? (
+                                <Check size={16} className="text-success" />
+                              ) : (
+                                <X size={16} className="text-danger" />
+                              )}
+                            </div>
+                            <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
                                   <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>{round.disaster}</span>{' '}
-                                  <span className={round.result === 'correct' ? 'text-success' : 'text-danger'}>
+                              <span className={round.result === 'correct' ? 'text-success' : 'text-danger'}>
                                     ({round.result === 'correct' ? 'Won' : 'Not Won'} in Round {round.round})
-                                  </span>
-                                </div>
-                              </div>
+                              </span>
+                            </div>
+                          </div>
                             ))
                           ) : (
                             <div className="small text-muted ms-3">No gameplay rounds completed</div>
