@@ -109,11 +109,11 @@ const initDatabase = () => {
         FOREIGN KEY (game_session_id) REFERENCES game_sessions(id),
         FOREIGN KEY (card_id) REFERENCES cards(id)
       )
-            `, (err) => {
-              if (err) {
-                reject(err);
-                return;
-              }
+              `, (err) => {
+                if (err) {
+                  reject(err);
+                  return;
+                }
 
                   console.log('✅ Database initialized successfully!');
                   console.log('📋 Created tables: users, themes, cards, game_sessions, game_rounds');
