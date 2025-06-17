@@ -81,22 +81,25 @@
 ## Screenshots
 
 ### Homepage
-![Homepage](./client/public/screenshots/1.png)
+![Homepage](./client/public/screenshots/homepage.png)
 
 ### Theme Selection
-![Theme Selection](./client/public/screenshots/2.png)
+![Theme Selection](./client/public/screenshots/themes.png)
 
 ### Game Interface
-![Game Interface](./client/public/screenshots/3.png)
+![Game Interface](./client/public/screenshots/game.png)
 
-### Game Feedback
-![Game Feedback](./client/public/screenshots/4.png)
+### Game Features
+![Game Features](./client/public/screenshots/game_features.png)
+
+### Game Rules
+![Game Rules](./client/public/screenshots/game_rules.png)
 
 ### User Profile
-![User Profile](./client/public/screenshots/5.png)
+![User Profile](./client/public/screenshots/profile.png)
 
 ### Login Page
-![Login Page](./client/public/screenshots/6.png)
+![Login Page](./client/public/screenshots/login.png)
 
 ## Users Credentials
 
