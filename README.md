@@ -15,9 +15,13 @@
 - POST `/api/users/register`
   - request body: {username, email, password}
   - response: 201 Created with user ID or 422 validation errors
+- PUT `/api/users/:id`
+  - request parameters: id (user ID)
+  - request body: {username, email, name}
+  - response: 200 user updated successfully or 422 validation errors  
 - POST `/api/sessions`
   - request body: {username, password}
-  - response: 201 with authenticated user object or 401 authentication failed
+  - response: 201 with authenticated user object or 401 authentication failed 
 - GET `/api/sessions/current`
   - response: current authentication status and user info
 - DELETE `/api/sessions/current`
@@ -45,12 +49,18 @@
   - request parameters: id (game session ID)
   - request body: {round_number, card_id, user_choice_position, time_taken}
   - response: round results with correct position and card severity
+- POST `/api/game-sessions/:id/end`
+  - request parameters: id (game session ID)
+  - response: game session ended with final score
 - GET `/api/users/:id/history`
   - request parameters: id (user ID)
   - response: user's game history summary
 - GET `/api/users/:id/history/:gameId`
   - request parameters: id (user ID), gameId (game session ID)
   - response: detailed round-by-round game history
+- DELETE `/api/users/:id/history`
+  - request parameters: id (user ID)
+  - response: clears user's game history
 
 ## Database Tables
 
@@ -69,14 +79,6 @@
 - `Login` (in `Login.jsx`): Authentication forms for login and user registration
 - `AuthProvider` (in `AuthContext.jsx`): Context provider for user authentication state management
 - `ThemeProvider` (in `ThemeContext.jsx`): Context provider for dark/light theme switching
-
-## Key Features
-
-- **Demo Mode**: Anonymous users can play Travel theme with 1 round
-- **Game Resume**: Logged-in users can resume interrupted games with persistent state
-- **Anti-Exploit System**: Deterministic card selection and persistent timer prevent cheating
-- **Responsive Design**: Works on desktop and mobile devices
-- **Dark/Light Theme**: User preference for visual theme
 
 ## Screenshots
 

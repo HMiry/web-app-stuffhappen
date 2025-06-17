@@ -85,6 +85,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('selectedTheme', themeId);
   };
 
+  const updateUser = (updatedUserData) => {
+    const newUser = { ...user, ...updatedUserData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const value = {
     isLoggedIn,
     user,
@@ -92,7 +98,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    selectTheme
+    selectTheme,
+    updateUser
   };
 
   return (

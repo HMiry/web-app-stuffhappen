@@ -8,7 +8,7 @@ import API from '../services/api.mjs';
 const Profile = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
   const [userInfo, setUserInfo] = React.useState(null);
   const [gameHistory, setGameHistory] = React.useState([]);
@@ -34,14 +34,22 @@ const Profile = () => {
         name: userInfo.name || user.name
       };
       
+      console.log('Updating profile with data:', updateData);
       const result = await API.user.updateProfile(user.id, updateData);
+      console.log('Update result:', result);
       
       if (result.success) {
         // Update successful - close modal
-    setIsEditing(false);
+        setIsEditing(false);
         
-        // Refresh user data from context (no separate profile needed)
-        setUserInfo(user);
+        // Update user data in AuthContext
+        updateUser(updateData);
+        
+        // Update local state with new data
+        const updatedUser = { ...user, ...updateData };
+        setUserInfo(updatedUser);
+        
+        console.log('Profile updated successfully. New user data:', updatedUser);
       } else {
         // Show error message
         console.error('Failed to update profile:', result.error);
