@@ -103,7 +103,7 @@
 
 ## Users Credentials
 
-- admin, admin123 (admin user with full privileges)
-- hojjat, hojjat123 (regular user for testing)
-- FulvioCorno, fulviocorno123 (regular user)
-- FrancescaRusso, francescarusso123 (regular user)
+- admin, admin123 
+- hojjat, hojjat123 
+- FulvioCorno, fulviocorno123 
+- FrancescaRusso, francescarusso123 
