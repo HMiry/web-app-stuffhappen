@@ -2,3 +2,119 @@ node_modules/
 .DS_Store
 Desktop.ini
 Thumbs.db
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production builds
+dist/
+dist-ssr/
+*/dist/
+build/
+*/build/
+
+# Development
+.vite/
+*/.vite/
+.cache/
+*.local
+.vercel
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Database files
+*.sqlite
+*.sqlite3
+# server/db/*.db    # Comment out so database is included
+# server/db/*.sqlite*   # Comment out so database is included
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Package-lock files (for workspace projects)
+package-lock.json
+*/package-lock.json
+yarn.lock
+*/yarn.lock
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.exe
+*.msi
+*.msm
+*.msp
+
+# macOS
+*.dmg
+*.app
+
+# IDEs and editors
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.settings/
+.buildpath
+
+
+# Runtime configuration
+.npmrc
+.yarnrc
+
+# Testing
+.jest/
+coverage/
+
+
+*.tgz
+*.tar.gz

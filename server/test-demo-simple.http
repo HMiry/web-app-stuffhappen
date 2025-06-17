@@ -1,0 +1,43 @@
+### Simple Demo Test (Manual Session ID Entry)
+
+### Step 1: Create demo session
+POST http://localhost:3001/api/game-sessions
+Content-Type: application/json
+
+{"theme_key":"university"}
+
+### Copy the session_id from above response and use below
+### Example: if response shows "session_id": 123, then use 123 below
+
+### Step 2: Get next card (replace 123 with actual session_id from Step 1)
+@session_id = 5
+GET http://localhost:3001/api/game-sessions/{{session_id}}/next-card
+Content-Type: application/json
+
+### Step 3: Submit round (replace 123 with session_id and 10 with card_id from Step 2)
+POST http://localhost:3001/api/game-sessions/{{session_id}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 1,
+  "card_id": 10,
+  "user_choice_position": 2,
+  "time_taken": 15
+}
+
+### CHECK CURRENT SITUATION - See all cards played so far
+GET http://localhost:3001/api/game-sessions/{{session_id}}/rounds
+Content-Type: application/json
+### Step 9: Check final game status (should show "won" with 6 cards collected)
+GET http://localhost:3001/api/game-sessions/{{session_id}}
+
+### Step 4: Try second round (should fail with 403 for demo user)
+POST http://localhost:3001/api/game-sessions/{{session_id}}/rounds
+Content-Type: application/json
+
+{
+  "round_number": 2,
+  "card_id": 15,
+  "user_choice_position": 3,
+  "time_taken": 20
+} 
