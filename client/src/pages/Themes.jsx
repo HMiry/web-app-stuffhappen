@@ -46,6 +46,15 @@ const Themes = () => {
             }));
           
           setThemes(transformedThemes);
+          
+          // Preload theme images to prevent loading delays
+          transformedThemes.forEach(theme => {
+            const img = new Image();
+            img.src = theme.backgroundImage;
+            // Optional: Add error handling
+            img.onerror = () => console.warn(`Failed to preload image: ${theme.backgroundImage}`);
+          });
+          
         } else {
           setError(result.error || 'Failed to load themes');
         }
