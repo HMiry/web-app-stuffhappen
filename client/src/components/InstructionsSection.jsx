@@ -105,7 +105,7 @@ const InstructionsSection = () => {
                     <h6 style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: '#4A90E2'}}>🎮 User Types</h6>
                     <ul style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,26,0.8)', fontSize: '14px'}}>
                       <li><strong>Anonymous:</strong> Play 1-round demo games only</li>
-                      <li><strong>Registered:</strong> Play full games + view game history</li>
+                      <li><strong>Authenticated:</strong> Play full games + view game history</li>
                       <li>All completed games are saved to your profile</li>
                     </ul>
                     

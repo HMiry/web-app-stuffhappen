@@ -12,9 +12,7 @@
 
 ## API Server
 
-- POST `/api/users/register`
-  - request body: {username, email, password}
-  - response: 201 Created with user ID or 422 validation errors
+
 - PUT `/api/users/:id`
   - request parameters: id (user ID)
   - request body: {username, email, name}

@@ -33,7 +33,7 @@ const GameFeaturesSection = () => {
     {
       icon: Users,
       title: 'User Profiles',
-      description: 'Register to save your games and compete with friends'
+              description: 'Log in to save your games and compete with friends'
     },
     {
       icon: Zap,

@@ -37,35 +37,7 @@ const authAPI = {
     }
   },
 
-  // Register new user
-  async register(userData) {
-    try {
-      const response = await fetch(`${SERVER_URL}/api/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(userData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, data };
-      } else {
-        const errorData = await response.json();
-        return { 
-          success: false, 
-          error: errorData.error || 'Registration failed' 
-        };
-      }
-    } catch (error) {
-      return { 
-        success: false, 
-        error: 'Network error. Please try again.' 
-      };
-    }
-  },
+  // Registration functionality removed - users created through other means
 
   // Check current session
   async checkSession() {

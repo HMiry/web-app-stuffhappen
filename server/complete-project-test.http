@@ -1,0 +1,272 @@
+# COMPLETE PROJECT TEST SUITE
+# Tests all major features of the Stuff Happens application
+# Based on README.md API documentation and project requirements
+# Note: User registration has been removed - users must be created through other means
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+
+###############################################
+# 1. USER AUTHENTICATION (NO REGISTRATION)
+###############################################
+
+### 1.1 Login with existing user (hojjat)
+POST {{baseUrl}}/api/sessions
+Content-Type: {{contentType}}
+
+{
+  "username": "hojjat",
+  "password": "hojjat123"
+}
+
+### 1.2 Check current session status
+GET {{baseUrl}}/api/sessions/current
+
+###############################################
+# 2. PROFILE MANAGEMENT
+###############################################
+
+### 2.1 Update user profile (use actual user ID from login response)
+PUT {{baseUrl}}/api/users/4
+Content-Type: {{contentType}}
+
+{
+  "username": "hojjat",
+  "email": "hojjat@test.com",
+  "name": "Hojjat"
+}
+
+### 2.2 Verify profile update by checking session
+GET {{baseUrl}}/api/sessions/current
+
+###############################################
+# 3. THEME EXPLORATION
+###############################################
+
+### 3.15 Get all available themes
+GET {{baseUrl}}/api/themes/all
+
+
+### 3.1 Get all available themes
+GET {{baseUrl}}/api/themes
+
+
+### 3.2 Get cards from Travel theme (theme_id: 1)
+GET {{baseUrl}}/api/themes/1/cards?limit=5
+
+### 3.3 Get cards from Work theme (theme_id: 2)
+GET {{baseUrl}}/api/themes/2/cards?limit=5
+
+###############################################
+# 4. DEMO MODE GAMEPLAY (Anonymous User)
+###############################################
+
+### 4.1 Logout current user to test demo mode
+DELETE {{baseUrl}}/api/sessions/current
+
+### 4.2 Start demo game (Travel theme - no login required)
+POST {{baseUrl}}/api/game-sessions
+Content-Type: {{contentType}}
+
+{
+  "theme_key": "travel"
+}
+
+### 4.3 Get first card for demo game (use session_id from response above)
+@DEMO_SESSION_ID = 1
+GET {{baseUrl}}/api/game-sessions/{{DEMO_SESSION_ID}}/next-card
+
+### 4.4 Submit demo round (demo only allows 1 round)
+POST {{baseUrl}}/api/game-sessions/{{DEMO_SESSION_ID}}/rounds
+Content-Type: {{contentType}}
+
+{
+  "round_number": 1,
+  "card_id": 65,
+  "user_choice_position": 2,
+  "time_taken": 15
+}
+
+### 4.5 Demo games auto-end after 1 round
+# No manual ending needed - demo games automatically end after the single round
+
+###############################################
+# 5. FULL AUTHENTICATED GAMEPLAY
+###############################################
+
+### 5.1 Login again for full game
+POST {{baseUrl}}/api/sessions
+Content-Type: {{contentType}}
+
+{
+  "username": "hojjat",
+  "password": "hojjat123"
+}
+
+### 5.2 Start Work theme game (requires login)
+POST {{baseUrl}}/api/game-sessions
+Content-Type: {{contentType}}
+
+{
+  "theme_key": "work"
+}
+
+### 5.3 Get active game session
+GET {{baseUrl}}/api/game-sessions/active
+
+### 5.4 Get game session details (use session_id from response above)
+@GAME_SESSION_ID = 2
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}
+
+### 5.5 Get current rounds for the session
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/rounds
+
+###############################################
+# 6. COMPLETE GAME ROUNDS (Win Scenario)
+###############################################
+
+### Round 1
+### 6.1 Get next card for Round 1
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/next-card
+
+### 6.2 Submit Round 1 guess
+POST {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/rounds
+Content-Type: {{contentType}}
+
+{
+  "round_number": 1,
+  "card_id": 18,
+  "user_choice_position": 3,
+  "time_taken": 12
+}
+
+### Round 2
+### 6.3 Get next card for Round 2
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/next-card
+
+### 6.4 Submit Round 2 guess
+POST {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/rounds
+Content-Type: {{contentType}}
+
+{
+  "round_number": 2,
+  "card_id": 28,
+  "user_choice_position": 4,
+  "time_taken": 8
+}
+
+### Round 3
+### 6.5 Get next card for Round 3
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/next-card
+
+### 6.6 Submit Round 3 guess (final round to win)
+POST {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/rounds
+Content-Type: {{contentType}}
+
+{
+  "round_number": 3,
+  "card_id": 37,
+  "user_choice_position": 2,
+  "time_taken": 18
+}
+
+### 6.7 Check if game is complete
+GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}
+
+### 6.8 Game automatically ends when conditions are met
+# Games end automatically on: 6 wins, 3 losses, or 1 demo round
+# No manual ending needed
+
+###############################################
+# 7. GAME RESUME FUNCTIONALITY
+###############################################
+
+### 7.1 Start another game but don't finish it
+POST {{baseUrl}}/api/game-sessions
+Content-Type: {{contentType}}
+
+{
+  "theme_key": "travel"
+}
+
+### 7.2 Play one round and leave
+@RESUME_SESSION_ID = 3
+GET {{baseUrl}}/api/game-sessions/{{RESUME_SESSION_ID}}/next-card
+### 7.2 Play one round and leave
+POST {{baseUrl}}/api/game-sessions/{{RESUME_SESSION_ID}}/rounds
+Content-Type: {{contentType}}
+
+{
+  "round_number": 1,
+  "card_id": 66,
+  "user_choice_position": 3,
+  "time_taken": 20
+}
+
+### 7.3 Check active game (should show resumable game)
+GET {{baseUrl}}/api/game-sessions/active
+
+### 7.4 Resume by getting next card
+GET {{baseUrl}}/api/game-sessions/{{RESUME_SESSION_ID}}/next-card
+
+###############################################
+# 8. USER HISTORY MANAGEMENT
+###############################################
+
+### 8.1 Get user's complete game history (use actual user_id)
+@USER_ID = 4
+GET {{baseUrl}}/api/users/{{USER_ID}}/history
+
+
+
+### 8.3 Clear user's game history
+DELETE {{baseUrl}}/api/users/{{USER_ID}}/history
+
+### 8.4 Verify history is cleared
+GET {{baseUrl}}/api/users/{{USER_ID}}/history
+
+###############################################
+# 9. EDGE CASES & ERROR HANDLING
+###############################################
+
+### 9.1 Try to access restricted theme without login
+DELETE {{baseUrl}}/api/sessions/current
+
+### 9.2 Try to start game without login
+POST {{baseUrl}}/api/game-sessions
+Content-Type: {{contentType}}
+
+{
+  "theme_key": "work"
+}
+
+### 9.2 Try to update profile without authentication
+PUT {{baseUrl}}/api/users/{{USER_ID}}
+Content-Type: {{contentType}}
+
+{
+  "username": "unauthorized",
+  "email": "test@test.com",
+  "name": "Should Fail"
+}
+
+### 9.3 Login with wrong credentials
+POST {{baseUrl}}/api/sessions
+Content-Type: {{contentType}}
+
+{
+  "username": "hojjat",
+  "password": "wrongpassword"
+}
+
+
+###############################################
+# 10. ADMIN/TESTING ENDPOINTS (if available)
+###############################################
+
+### 10.1 Check database status
+GET {{baseUrl}}/api/admin/status
+
+### 10.2 Reset game data only it was put to test the game when the front was not implemented yet.
+DELETE {{baseUrl}}/api/admin/reset-games
+

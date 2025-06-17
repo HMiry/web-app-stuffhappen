@@ -4,7 +4,7 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {check, validationResult} from 'express-validator';
-import {listUsers, getUser, addUser, authenticateUser, updateUser, deleteUser} from './collections/UserCollection.mjs';
+import {listUsers, getUser, authenticateUser, updateUser, deleteUser} from './collections/UserCollection.mjs';
 import {listGames, getGame, addGame, updateGameStatus, getGamesByCreator, joinGame, getGamePlayers} from './collections/GameCollection.mjs';
 import {listThemes, listActiveThemes, getTheme, getThemeByKey, getThemeCards, getRandomThemeCards, addTheme, updateTheme, deleteTheme, getThemeStats} from './collections/ThemeCollection.mjs';
 import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory, endGameSession} from './collections/GameSessionCollection.mjs';
@@ -109,49 +109,7 @@ app.get('/api/users/:id', async (request, response) => {
   }
 });
 
-// POST /api/users (alias for registration)
-app.post('/api/users', [
-  check('username').notEmpty(),
-  check('email').isEmail(),
-  check('password').isLength({ min: 6 })
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({errors: errors.array()});
-  }
-
-  const newUser = req.body;
-
-  try {
-    const id = await addUser(newUser);
-    res.status(201).location(id).end();
-  } catch(e) {
-    console.error(`ERROR: ${e.message}`);
-    res.status(503).json({error: 'Impossible to create the user.'});
-  }
-});
-
-// POST /api/users/register
-app.post('/api/users/register', [
-  check('username').notEmpty(),
-  check('email').isEmail(),
-  check('password').isLength({ min: 6 })
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({errors: errors.array()});
-  }
-
-  const newUser = req.body;
-
-  try {
-    const id = await addUser(newUser);
-    res.status(201).location(id).end();
-  } catch(e) {
-    console.error(`ERROR: ${e.message}`);
-    res.status(503).json({error: 'Impossible to create the user.'});
-  }
-});
+// User registration functionality removed - users should be created manually or through admin tools
 
 // PUT /api/users/<id>
 app.put('/api/users/:id', isLoggedIn, [
@@ -168,7 +126,37 @@ app.put('/api/users/:id', isLoggedIn, [
 
   try {
     await updateUser(userId, userToUpdate);
-    res.status(200).end();
+    
+    // If the user is updating their own profile, refresh the session data
+    if (req.user.id == userId) {
+      const updatedUser = await getUser(userId);
+      if (!updatedUser.error) {
+        console.log(`[PROFILE UPDATE] Refreshing session for user ${userId}: ${req.user.name} -> ${updatedUser.name}`);
+        
+        // Filter out sensitive fields before updating session
+        const safeUserData = {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          name: updatedUser.name
+        };
+        
+        // Use Passport's login method to properly update the session
+        req.logIn(safeUserData, (err) => {
+          if (err) {
+            console.error('[PROFILE UPDATE] Login refresh error:', err);
+            res.status(503).json({'error': 'Session refresh failed'});
+          } else {
+            console.log('[PROFILE UPDATE] Session refreshed successfully');
+            res.status(200).end();
+          }
+        });
+      } else {
+        res.status(200).end();
+      }
+    } else {
+      res.status(200).end();
+    }
   } catch {
     res.status(503).json({'error': `Impossible to update user #${req.params.id}.`});
   }
@@ -320,7 +308,7 @@ app.get('/api/sessions/current', function(req, res) {
       user: null,
       sessionId: null,
       demo_available: true,
-      demo_theme: 'university'
+      demo_theme: 'travel'
     });
   }
 });
@@ -527,7 +515,7 @@ app.post('/api/game-sessions', async (req, res) => {
       max_rounds: isDemo ? 1 : 6,
       starting_hand: true,
       message: isDemo 
-        ? "Demo game: 1 round only. Register to play full games!"
+        ? "Demo game: 1 round only. Log in to play full games!"
         : "Game started! These 3 cards are your starting hand, ordered by severity."
     });
   } catch(e) {
@@ -711,7 +699,7 @@ app.post('/api/game-sessions/:id/rounds', [
       
       if (gameplayRounds.length >= 1) {
         return res.status(403).json({
-          error: 'Demo users can only play 1 round. Register to play full games!',
+          error: 'Demo users can only play 1 round. Log in to play full games!',
           demo: true,
           rounds_played: gameplayRounds.length
         });
@@ -844,15 +832,15 @@ app.post('/api/game-sessions/:id/rounds', [
     // Add demo-specific messaging
     if (isDemo) {
       response.message = isCorrect 
-        ? `Correct! The card belonged in position ${correctPosition}. Register to play full games!`
-        : `Wrong! The card belonged in position ${correctPosition}, not ${user_choice_position}. Register to play full games!`;
+        ? `Correct! The card belonged in position ${correctPosition}. Log in to play full games!`
+        : `Wrong! The card belonged in position ${correctPosition}, not ${user_choice_position}. Log in to play full games!`;
     }
     
     // Add timeout penalty information if applicable
     if (timeoutPenalty) {
       response.timeout_penalty = true;
       response.message = isDemo 
-        ? `Time's up! Answers over 30 seconds are considered incorrect. The card belonged in position ${correctPosition}. Register to play full games!`
+        ? `Time's up! Answers over 30 seconds are considered incorrect. The card belonged in position ${correctPosition}. Log in to play full games!`
         : "Time's up! Answers over 30 seconds are considered incorrect.";
       response.time_limit_exceeded = time_taken;
     }
@@ -1152,7 +1140,7 @@ const startServer = async () => {
       console.log('  - GET /api/themes - Get all active themes');
       console.log('  - POST /api/game-sessions - Start a new game');
       console.log('  - GET /api/users/:id/history - Get user game history');
-      console.log('  - POST /api/users/register - Register new user');
+
       console.log('  - POST /api/sessions - Login');
     });
   } catch (error) {
