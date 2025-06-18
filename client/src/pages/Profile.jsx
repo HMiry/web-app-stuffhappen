@@ -40,7 +40,7 @@ const Profile = () => {
       
       if (result.success) {
         // Update successful - close modal
-        setIsEditing(false);
+    setIsEditing(false);
         
         // Update user data in AuthContext
         updateUser(updateData);

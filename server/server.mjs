@@ -148,7 +148,7 @@ app.put('/api/users/:id', isLoggedIn, [
             res.status(503).json({'error': 'Session refresh failed'});
           } else {
             console.log('[PROFILE UPDATE] Session refreshed successfully');
-            res.status(200).end();
+    res.status(200).end();
           }
         });
       } else {

@@ -19,7 +19,7 @@
   - response: 200 user updated successfully or 422 validation errors  
 - POST `/api/sessions`
   - request body: {username, password}
-  - response: 201 with authenticated user object or 401 authentication failed 
+  - response: 201 with authenticated user object or 401 authentication failed
 - GET `/api/sessions/current`
   - response: current authentication status and user info
 - DELETE `/api/sessions/current`
