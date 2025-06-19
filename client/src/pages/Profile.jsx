@@ -388,57 +388,138 @@ const Profile = () => {
                         </div>
                       </div>
                       
-                      {/* Complete Card History */}
-                      <div className="mt-3">
+                      {/* Visual Card History */}
+                      <div className="mt-4">
                         <div className="small fw-semibold mb-3" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600', color: isDark ? 'white' : '#1a1a1a'}}>
-                          All Cards Involved in Game:
+                          Cards in This Game:
                         </div>
                         
-                        {/* Starting Cards Section */}
-                        <div className="mb-3">
-                          <div className="small fw-semibold mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
-                            Starting Hand (3 cards):
+                        {/* Starting Hand Cards - Horizontal Layout */}
+                        <div className="mb-4">
+                          <div className="small fw-semibold mb-2 d-flex align-items-center" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
+                            <div className="rounded-circle bg-secondary me-2" style={{width: '8px', height: '8px'}}></div>
+                            Starting Hand (3 cards)
                           </div>
                           {game.startingCards && game.startingCards.length > 0 ? (
-                            game.startingCards.map((card, index) => (
-                              <div key={`start-${index}`} className="d-flex align-items-center mb-1 ms-3">
-                                <div className="me-2" style={{width: '20px'}}>
-                                  <div className="rounded-circle bg-secondary" style={{width: '8px', height: '8px'}}></div>
+                            <div className="d-flex flex-wrap gap-2 ms-3">
+                              {game.startingCards.map((card, index) => (
+                                <div 
+                                  key={`start-${index}`} 
+                                  className="card border-0 shadow-sm" 
+                                  style={{
+                                    width: '140px',
+                                    backgroundColor: isDark ? '#333333' : '#f8f9fa',
+                                    borderRadius: '8px',
+                                    border: '2px solid #6c757d'
+                                  }}
+                                >
+                                  <div className="position-relative" style={{height: '80px', overflow: 'hidden', borderRadius: '6px 6px 0 0'}}>
+                                    <img 
+                                      src={card.image_url || '/images/travel1.png'} 
+                                      alt={card.disaster || card.title}
+                                      className="w-100 h-100"
+                                      style={{objectFit: 'cover'}}
+                                      onError={(e) => {
+                                        e.target.src = '/images/travel1.png'; // Fallback image
+                                      }}
+                                    />
+
+                                  </div>
+                                  <div className="card-body p-2">
+                                    <div 
+                                      className="small fw-semibold text-truncate" 
+                                      style={{
+                                        fontFamily: 'Poppins, sans-serif', 
+                                        fontSize: '11px',
+                                        color: isDark ? 'white' : '#1a1a1a',
+                                        lineHeight: '1.2'
+                                      }}
+                                      title={`${card.disaster || card.title} (ID: ${card.card_id || 'N/A'})`}
+                                    >
+                                      {card.disaster || card.title}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
-                                  <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>{card.disaster}</span>{' '}
-                                  <span className="text-muted">(Initial Card)</span>
-                                </div>
-                              </div>
-                            ))
+                              ))}
+                            </div>
                           ) : (
                             <div className="small text-muted ms-3">No starting cards data available</div>
                           )}
                         </div>
 
-                        {/* Gameplay Rounds Section */}
+                        {/* Gameplay Cards - Horizontal Layout */}
                         <div className="mb-2">
-                          <div className="small fw-semibold mb-2" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
-                            Cards Presented During Game:
+                          <div className="small fw-semibold mb-2 d-flex align-items-center" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '500', color: '#4A90E2'}}>
+                            <Trophy size={12} className="me-2" />
+                            Cards Played ({game.gameplayRounds ? game.gameplayRounds.length : 0} rounds)
                           </div>
                           {game.gameplayRounds && game.gameplayRounds.length > 0 ? (
-                            game.gameplayRounds.map((round, index) => (
-                              <div key={`round-${index}`} className="d-flex align-items-center mb-1 ms-3">
-                            <div className="me-2" style={{width: '20px'}}>
-                              {round.result === 'correct' ? (
-                                <Check size={16} className="text-success" />
-                              ) : (
-                                <X size={16} className="text-danger" />
-                              )}
+                            <div className="d-flex flex-wrap gap-2 ms-3">
+                              {game.gameplayRounds.map((round, index) => (
+                                <div 
+                                  key={`round-${index}`} 
+                                  className="card border-0 shadow-sm" 
+                                  style={{
+                                    width: '140px',
+                                    backgroundColor: isDark ? '#333333' : '#f8f9fa',
+                                    borderRadius: '8px',
+                                    border: `2px solid ${round.result === 'correct' ? '#28a745' : '#dc3545'}`
+                                  }}
+                                >
+                                  <div className="position-relative" style={{height: '80px', overflow: 'hidden', borderRadius: '6px 6px 0 0'}}>
+                                    <img 
+                                      src={round.image_url || '/images/travel1.png'} 
+                                      alt={round.disaster}
+                                      className="w-100 h-100"
+                                      style={{objectFit: 'cover'}}
+                                      onError={(e) => {
+                                        e.target.src = '/images/travel1.png'; // Fallback image
+                                      }}
+                                    />
+                                    <div 
+                                      className="position-absolute top-0 end-0 px-2 py-1 text-white d-flex align-items-center"
+                                      style={{
+                                        backgroundColor: round.result === 'correct' ? 'rgba(40, 167, 69, 0.9)' : 'rgba(220, 53, 69, 0.9)',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        borderRadius: '0 6px 0 6px'
+                                      }}
+                                    >
+                                      {round.result === 'correct' ? (
+                                        <Check size={10} className="me-1" />
+                                      ) : (
+                                        <X size={10} className="me-1" />
+                                      )}
+                                      R{round.round}
+                                    </div>
+                                  </div>
+                                  <div className="card-body p-2">
+                                    <div 
+                                      className="small fw-semibold text-truncate" 
+                                      style={{
+                                        fontFamily: 'Poppins, sans-serif', 
+                                        fontSize: '11px',
+                                        color: isDark ? 'white' : '#1a1a1a',
+                                        lineHeight: '1.2'
+                                      }}
+                                      title={`${round.disaster} (ID: ${round.card_id || 'N/A'})`}
+                                    >
+                                      {round.disaster}
+                                    </div>
+                                    <div 
+                                      className="small"
+                                      style={{
+                                        fontSize: '9px',
+                                        color: round.result === 'correct' ? '#28a745' : '#dc3545',
+                                        fontWeight: '500'
+                                      }}
+                                    >
+                                      {round.result === 'correct' ? 'Won' : 'Not Won'}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div className="small" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '400', color: isDark ? '#cccccc' : 'rgba(26,26,26,0.8)'}}>
-                                  <span className="fw-semibold" style={{color: isDark ? 'white' : '#1a1a1a'}}>{round.disaster}</span>{' '}
-                              <span className={round.result === 'correct' ? 'text-success' : 'text-danger'}>
-                                    ({round.result === 'correct' ? 'Won' : 'Not Won'} in Round {round.round})
-                              </span>
-                            </div>
-                          </div>
-                            ))
                           ) : (
                             <div className="small text-muted ms-3">No gameplay rounds completed</div>
                           )}

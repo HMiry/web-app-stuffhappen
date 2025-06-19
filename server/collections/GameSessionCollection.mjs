@@ -153,7 +153,12 @@ export const getUserGameHistory = (userId, limit = 10) => {
       FROM game_sessions gs
       JOIN themes t ON gs.theme_id = t.id
       LEFT JOIN game_rounds gr ON gs.id = gr.game_session_id
-      WHERE gs.user_id = ? AND gs.status != 'active'
+      WHERE gs.user_id = ? AND (
+        gs.status = 'completed' OR 
+        gs.cards_won >= 3 OR 
+        gs.wrong_guesses >= 3 OR
+        gs.game_result IS NOT NULL
+      )
       GROUP BY gs.id
       ORDER BY gs.time_started DESC
       LIMIT ?
@@ -191,7 +196,7 @@ export const getDetailedGameHistory = (userId, gameId) => {
       }
       
       const roundsSql = `
-        SELECT gr.*, c.title as disaster, c.bad_luck_severity
+        SELECT gr.*, c.title as disaster, c.bad_luck_severity, c.image_url
         FROM game_rounds gr
         JOIN cards c ON gr.card_id = c.id
         WHERE gr.game_session_id = ?
@@ -209,7 +214,8 @@ export const getDetailedGameHistory = (userId, gameId) => {
               disaster: round.disaster,
               result: round.is_correct ? 'correct' : 'incorrect',
               time_taken: round.time_taken,
-              points_earned: round.points_earned
+              points_earned: round.points_earned,
+              image_url: round.image_url
             }))
           });
         }
