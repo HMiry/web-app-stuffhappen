@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
-
+// This is the logic for the theme toggle button
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {

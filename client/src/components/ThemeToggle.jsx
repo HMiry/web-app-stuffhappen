@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-
+// Just the design of the theme toggle button the logic is in the ThemeContext.jsx
 const ThemeToggle = ({ style = {}, className = '' }) => {
   const { isDark, toggleTheme } = useTheme();
 

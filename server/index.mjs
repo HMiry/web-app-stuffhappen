@@ -88,7 +88,7 @@ app.use(passport.authenticate('session'));
 
 /* ROUTES */
 
-// PUT /api/users/<id>
+//1. PUT /api/users/<id>
 app.put('/api/users/:id', isLoggedIn, [
   check('username').notEmpty(),
   check('email').isEmail()
@@ -139,7 +139,7 @@ app.put('/api/users/:id', isLoggedIn, [
   }
 });
 
-// POST /api/sessions
+// 2..POST /api/sessions
 app.post('/api/sessions', function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if (err) {
@@ -162,7 +162,7 @@ app.post('/api/sessions', function(req, res, next) {
   })(req, res, next);
 });
 
-// GET /api/sessions/current - Check current authentication status
+// 3.GET /api/sessions/current - Check current authentication status
 app.get('/api/sessions/current', function(req, res) {
   const authStatus = checkAuth(req);
   if (authStatus.isAuthenticated) {
@@ -182,7 +182,7 @@ app.get('/api/sessions/current', function(req, res) {
   }
 });
 
-// DELETE /api/session/current
+// 4.DELETE /api/session/current
 app.delete('/api/sessions/current', (req, res) => {
   req.logout(() => {
     res.end();
@@ -191,7 +191,7 @@ app.delete('/api/sessions/current', (req, res) => {
 
 /* THEME ROUTES */
 
-// GET /api/themes
+// 5. GET /api/themes
 app.get('/api/themes', async (req, res) => {
   try {
     const themes = await listActiveThemes();
@@ -202,7 +202,7 @@ app.get('/api/themes', async (req, res) => {
   }
 });
 
-// GET /api/themes/all
+// 6. GET /api/themes/all
 app.get('/api/themes/all', async (req, res) => {
   try {
     const themes = await listThemes();
@@ -213,7 +213,7 @@ app.get('/api/themes/all', async (req, res) => {
   }
 });
 
-// GET /api/themes/:id/cards
+// 7. GET /api/themes/:id/cards
 app.get('/api/themes/:id/cards', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
@@ -227,7 +227,7 @@ app.get('/api/themes/:id/cards', async (req, res) => {
 
 /* GAME SESSION ROUTES */
 
-// POST /api/game-sessions
+// 8. POST /api/game-sessions
 app.post('/api/game-sessions', async (req, res) => {
   try {
     const { theme_key } = req.body;
@@ -316,7 +316,7 @@ app.post('/api/game-sessions', async (req, res) => {
   }
 });
 
-// GET /api/game-sessions/active
+// 9. GET /api/game-sessions/active
 app.get('/api/game-sessions/active', isLoggedIn, async (req, res) => {
   try {
     const session = await getActiveGameSession(req.user.id);
@@ -331,7 +331,7 @@ app.get('/api/game-sessions/active', isLoggedIn, async (req, res) => {
   }
 });
 
-// GET /api/game-sessions/:id
+// 10. GET /api/game-sessions/:id
 app.get('/api/game-sessions/:id', async (req, res) => {
   try {
     const sessionId = req.params.id;
@@ -358,7 +358,7 @@ app.get('/api/game-sessions/:id', async (req, res) => {
     res.status(500).json({error: 'Error fetching game session'});
   }
 });
-// GET /api/game-sessions/:id/rounds - Get all rounds for a game session for tracking progress
+// 11. GET /api/game-sessions/:id/rounds - Get all rounds for a game session for tracking progress
 app.get('/api/game-sessions/:id/rounds', async (req, res) => {
   try {
     const sessionId = req.params.id;
@@ -388,7 +388,7 @@ app.get('/api/game-sessions/:id/rounds', async (req, res) => {
   }
 });
 
-// GET /api/game-sessions/:id/next-card - Get consistent card for current round
+// 12. GET /api/game-sessions/:id/next-card - Get consistent card for current round
 app.get('/api/game-sessions/:id/next-card', async (req, res) => {
   try {
     const sessionId = req.params.id;
@@ -478,7 +478,7 @@ app.get('/api/game-sessions/:id/next-card', async (req, res) => {
   }
 });
 
-// POST /api/game-sessions/:id/rounds
+// 13. POST /api/game-sessions/:id/rounds
 app.post('/api/game-sessions/:id/rounds', [
   check('round_number').isNumeric(),
   check('card_id').isNumeric(),
@@ -690,7 +690,7 @@ app.post('/api/game-sessions/:id/rounds', [
 });
 
 
-// GET /api/users/:id/history
+// 14.GET /api/users/:id/history
 app.get('/api/users/:id/history', async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
@@ -702,7 +702,7 @@ app.get('/api/users/:id/history', async (req, res) => {
   }
 });
 
-// GET /api/users/:id/history/:gameId
+// 15.GET /api/users/:id/history/:gameId
 app.get('/api/users/:id/history/:gameId', async (req, res) => {
   try {
     const detailed = await getDetailedGameHistory(req.params.id, req.params.gameId);
@@ -717,7 +717,7 @@ app.get('/api/users/:id/history/:gameId', async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id/history - Clear user's game history
+// 16.DELETE /api/users/:id/history - Clear user's game history
 app.delete('/api/users/:id/history', isLoggedIn, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
@@ -761,7 +761,7 @@ app.delete('/api/users/:id/history', isLoggedIn, async (req, res) => {
   }
 });
 
-// Health check
+// 17.Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 

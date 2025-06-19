@@ -407,13 +407,13 @@ const Profile = () => {
                                   key={`start-${index}`} 
                                   className="card border-0 shadow-sm" 
                                   style={{
-                                    width: '140px',
+                                    width: '160px',
                                     backgroundColor: isDark ? '#333333' : '#f8f9fa',
                                     borderRadius: '8px',
                                     border: '2px solid #6c757d'
                                   }}
                                 >
-                                  <div className="position-relative" style={{height: '80px', overflow: 'hidden', borderRadius: '6px 6px 0 0'}}>
+                                                                    <div className="position-relative" style={{height: '80px', overflow: 'hidden', borderRadius: '6px 6px 0 0'}}>
                                     <img 
                                       src={card.image_url || '/images/travel1.png'} 
                                       alt={card.disaster || card.title}
@@ -427,16 +427,32 @@ const Profile = () => {
                                   </div>
                                   <div className="card-body p-2">
                                     <div 
-                                      className="small fw-semibold text-truncate" 
+                                      className="small fw-semibold" 
                                       style={{
                                         fontFamily: 'Poppins, sans-serif', 
-                                        fontSize: '11px',
+                                        fontSize: '10px',
                                         color: isDark ? 'white' : '#1a1a1a',
-                                        lineHeight: '1.2'
+                                        lineHeight: '1.3',
+                                        height: '32px',
+                                        overflow: 'hidden',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical'
                                       }}
                                       title={`${card.disaster || card.title} (ID: ${card.card_id || 'N/A'})`}
                                     >
                                       {card.disaster || card.title}
+                                    </div>
+                                    <div 
+                                      className="d-flex justify-content-end"
+                                      style={{
+                                        fontSize: '8px',
+                                        color: '#6c757d',
+                                        fontWeight: '600',
+                                        marginTop: '2px'
+                                      }}
+                                    >
+                                      Severity: {card.bad_luck_severity || 'N/A'}
                                     </div>
                                   </div>
                                 </div>
@@ -460,7 +476,7 @@ const Profile = () => {
                                   key={`round-${index}`} 
                                   className="card border-0 shadow-sm" 
                                   style={{
-                                    width: '140px',
+                                    width: '160px',
                                     backgroundColor: isDark ? '#333333' : '#f8f9fa',
                                     borderRadius: '8px',
                                     border: `2px solid ${round.result === 'correct' ? '#28a745' : '#dc3545'}`
@@ -492,29 +508,47 @@ const Profile = () => {
                                       )}
                                       R{round.round}
                                     </div>
+
                                   </div>
                                   <div className="card-body p-2">
                                     <div 
-                                      className="small fw-semibold text-truncate" 
+                                      className="small fw-semibold" 
                                       style={{
                                         fontFamily: 'Poppins, sans-serif', 
-                                        fontSize: '11px',
+                                        fontSize: '10px',
                                         color: isDark ? 'white' : '#1a1a1a',
-                                        lineHeight: '1.2'
+                                        lineHeight: '1.3',
+                                        height: '26px',
+                                        overflow: 'hidden',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical'
                                       }}
                                       title={`${round.disaster} (ID: ${round.card_id || 'N/A'})`}
                                     >
                                       {round.disaster}
                                     </div>
-                                    <div 
-                                      className="small"
-                                      style={{
-                                        fontSize: '9px',
-                                        color: round.result === 'correct' ? '#28a745' : '#dc3545',
-                                        fontWeight: '500'
-                                      }}
-                                    >
-                                      {round.result === 'correct' ? 'Won' : 'Not Won'}
+                                    <div className="d-flex justify-content-between align-items-center">
+                                      <div 
+                                        className="small"
+                                        style={{
+                                          fontSize: '9px',
+                                          color: round.result === 'correct' ? '#28a745' : '#dc3545',
+                                          fontWeight: '500'
+                                        }}
+                                      >
+                                        {round.result === 'correct' ? 'Won' : 'Not Won'}
+                                      </div>
+                                      <div 
+                                        className="small"
+                                        style={{
+                                          fontSize: '8px',
+                                          color: '#6c757d',
+                                          fontWeight: '600'
+                                        }}
+                                      >
+                                        Severity: {round.bad_luck_severity || 'N/A'}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>

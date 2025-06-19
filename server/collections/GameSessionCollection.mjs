@@ -215,7 +215,9 @@ export const getDetailedGameHistory = (userId, gameId) => {
               result: round.is_correct ? 'correct' : 'incorrect',
               time_taken: round.time_taken,
               points_earned: round.points_earned,
-              image_url: round.image_url
+              image_url: round.image_url,
+              bad_luck_severity: round.bad_luck_severity,
+              card_id: round.card_id
             }))
           });
         }
