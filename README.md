@@ -2,6 +2,26 @@
 # Exam #1: "Stuff Happens - Card Ranking Game"
 ## Student: s334026 Miryavifard Hojjat
 
+## Application Setup
+
+### Method 1: Traditional Setup (Required for Exam)
+```bash
+# Install dependencies
+cd server && npm install
+cd ../client && npm install
+
+# Development mode (two servers)
+cd server && nodemon index.mjs    # Terminal 1 - API + Static files
+cd client && npm run dev          # Terminal 2 - Dev server (optional)
+```
+Access at: http://localhost:3001 (Express serves everything)
+
+### Method 2: Docker Setup (Optional)
+```bash
+docker-compose up
+```
+Access at: http://localhost:5173 (Nginx + Express)
+
 ## React Client Application Routes
 
 - Route `/`: Main landing page with welcome screen and navigation to game features
@@ -12,11 +32,7 @@
 
 ## API Server
 
-
-- PUT `/api/users/:id`
-  - request parameters: id (user ID)
-  - request body: {username, email, name}
-  - response: 200 user updated successfully or 422 validation errors  
+### Authentication Endpoints
 - POST `/api/sessions`
   - request body: {username, password}
   - response: 201 with authenticated user object or 401 authentication failed
@@ -24,11 +40,29 @@
   - response: current authentication status and user info
 - DELETE `/api/sessions/current`
   - response: logout current user session
+
+### User Management
+- PUT `/api/users/:id`
+  - request parameters: id (user ID)
+  - request body: {username, email, name}
+  - response: 200 user updated successfully or 422 validation errors
+- GET `/api/users/:id/history`
+  - request parameters: id (user ID)
+  - response: user's game history summary
+- DELETE `/api/users/:id/history`
+  - request parameters: id (user ID)
+  - response: clears user's game history
+
+### Theme Endpoints
 - GET `/api/themes`
   - response: list of available game themes
+- GET `/api/themes/all`
+  - response: all themes including inactive ones
 - GET `/api/themes/:id/cards`
-  - request parameters: id (theme ID), count (optional, number of cards)
-  - response: cards from specified theme
+  - request parameters: id (theme ID)
+  - response: all cards from specified theme
+
+### Game Session Endpoints
 - POST `/api/game-sessions`
   - request body: {theme_key}
   - response: new game session with starting hand cards
@@ -47,18 +81,6 @@
   - request parameters: id (game session ID)
   - request body: {round_number, card_id, user_choice_position, time_taken}
   - response: round results with correct position and card severity
-- POST `/api/game-sessions/:id/end`
-  - request parameters: id (game session ID)
-  - response: game session ended with final score
-- GET `/api/users/:id/history`
-  - request parameters: id (user ID)
-  - response: user's game history summary
-- GET `/api/users/:id/history/:gameId`
-  - request parameters: id (user ID), gameId (game session ID)
-  - response: detailed round-by-round game history
-- DELETE `/api/users/:id/history`
-  - request parameters: id (user ID)
-  - response: clears user's game history
 
 ## Database Tables
 
@@ -80,26 +102,14 @@
 
 ## Screenshots
 
-### Homepage
-![Homepage](./client/public/screenshots/homepage.png)
-
-### Theme Selection
-![Theme Selection](./client/public/screenshots/themes.png)
-
 ### Game Interface
 ![Game Interface](./client/public/screenshots/game.png)
 
-### Game Features
-![Game Features](./client/public/screenshots/game_features.png)
-
-### Game Rules
-![Game Rules](./client/public/screenshots/game_rules.png)
 
 ### User Profile
 ![User Profile](./client/public/screenshots/profile.png)
 
-### Login Page
-![Login Page](./client/public/screenshots/login.png)
+
 
 ## Users Credentials
 

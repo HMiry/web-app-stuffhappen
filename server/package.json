@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Backend API server for Stuff Happens - following qa-server pattern",
   "type": "module",
-  "main": "server.mjs",
+  "main": "index.mjs",
   "scripts": {
-    "dev": "nodemon server.mjs",
-    "start": "node server.mjs",
+    "dev": "nodemon index.mjs",
+    "start": "node index.mjs",
+    "build": "cd ../client && npm run build",
+    "prod": "npm run build && npm start",
     "db:init": "node db/init.mjs",
     "db:seed": "node db/seed.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
