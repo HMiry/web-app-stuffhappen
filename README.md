@@ -49,6 +49,9 @@ Access at: http://localhost:5173 (Nginx + Express)
 - GET `/api/users/:id/history`
   - request parameters: id (user ID)
   - response: user's game history summary
+- GET `/api/users/:id/history/:gameId`
+  - request parameters: id (user ID), gameId (game session ID)
+  - response: detailed round-by-round game history
 - DELETE `/api/users/:id/history`
   - request parameters: id (user ID)
   - response: clears user's game history
@@ -84,7 +87,7 @@ Access at: http://localhost:5173 (Nginx + Express)
 
 ## Database Tables
 
-- Table `users` - contains user authentication (username, email, password_hash, salt) and basic info (name)
+- Table `users` - contains user authentication (username, email, password_hash) and basic info (name)
 - Table `themes` - contains game themes (theme_key, name, description, icon, color, background_image, category, difficulty_level, is_active, requires_login)
 - Table `cards` - contains disaster cards (theme_id, title, description, bad_luck_severity, image_url)
 - Table `game_sessions` - contains game session tracking (user_id, theme_id, status, current_round, current_round_start_time, cards_won, wrong_guesses, final_score, game_result, time_started, time_finished)

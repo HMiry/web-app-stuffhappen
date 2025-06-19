@@ -41,19 +41,12 @@ const Themes = () => {
               requires_login: theme.requires_login,
               loginRequired: theme.requires_login && !isLoggedIn,
               lockMessage: theme.requires_login && !isLoggedIn ? 'Login Required' : (!theme.is_active ? 'Coming Soon' : null),
-              backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62687.jpeg`,
-              limitation: (!isLoggedIn && theme.theme_key === 'travel') ? 'Demo: 1 round only' : null
+              backgroundImage: theme.background_image || `/images/freepik__the-style-is-candid-image-photography-with-natural__62687.jpeg`
             }));
           
           setThemes(transformedThemes);
           
-          // Preload theme images to prevent loading delays
-          transformedThemes.forEach(theme => {
-            const img = new Image();
-            img.src = theme.backgroundImage;
-            // Optional: Add error handling
-            img.onerror = () => console.warn(`Failed to preload image: ${theme.backgroundImage}`);
-          });
+
           
         } else {
           setError(result.error || 'Failed to load themes');
@@ -174,14 +167,6 @@ const Themes = () => {
                   transition: 'all 0.3s ease'
                 }}
                 onClick={() => navigate('/login')}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.color = '#4A90E2';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#4A90E2';
-                  e.currentTarget.style.color = 'white';
-                }}
               >
                 Login to unlock some more themes!
             </button>
@@ -220,18 +205,6 @@ const Themes = () => {
                         transition: 'all 0.3s ease'
                       }}
                       onClick={handleStartGame}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white';
-                        e.currentTarget.style.color = '#4A90E2';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(74, 144, 226, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#4A90E2';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'translateY(0px)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
                     >
                       Start Playing
                     </button>
@@ -331,21 +304,7 @@ const Themes = () => {
                       </div>
                     </div>
                     
-                    <div className="d-flex align-items-center justify-content-center mb-2">
-                      <h5 className="card-title mb-0 me-2 text-white" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>{theme.name}</h5>
-                      {theme.badge && (
-                        <span className={`badge ${theme.isActive ? 'bg-success' : 'bg-warning'}`} style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>
-                          {theme.badge}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Show limitation for Travel theme when not logged in */}
-                    {theme.limitation && (
-                      <div className="badge bg-success mb-3" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: '500', fontSize: '12px' }}>
-                        {theme.limitation}
-                      </div>
-                    )}
+                    <h5 className="card-title mb-2 text-white" style={{fontFamily: 'Poppins, sans-serif', fontWeight: '600'}}>{theme.name}</h5>
                     
                     <p className="card-text text-white small mb-2" style={{ opacity: 0.9, fontFamily: 'Poppins, sans-serif', fontWeight: '400', fontSize: '12px' }}>
                       {theme.description}

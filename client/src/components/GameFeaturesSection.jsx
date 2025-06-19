@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Timer, Trophy, BookOpen, Play, Users, Zap } from 'lucide-react';
+import { Timer, Trophy, BookOpen, Play, Users, Zap, Grid3X3 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -16,9 +16,9 @@ const GameFeaturesSection = () => {
       description: 'Quick thinking under pressure - just like real university life'
     },
     {
-      icon: Trophy,
-      title: 'Progressive Difficulty',
-      description: 'Cards get more challenging as you collect more disasters'
+      icon: Grid3X3,
+      title: 'Multiple Themes',
+      description: 'Choose from Travel, Work, Family, Sport, and University disasters'
     },
     {
       icon: BookOpen,

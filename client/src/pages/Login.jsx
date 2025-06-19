@@ -239,8 +239,8 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Benefits Section */}
-            <div className="card border-0 mt-4" style={{backgroundColor: '#f8fafc'}}>
+            {/* Benefits Section Below login*/}
+            <div className="card border-0 mt-2" style={{backgroundColor: '#f8fafc'}}>
               <div className="card-body p-4 text-center">
                 <h6 className="fw-bold mb-2" style={{color: '#1e3a8a'}}>Why create an account?</h6>
                 <div className="row g-3">
@@ -258,8 +258,8 @@ const Login = () => {
                   </div>
                   <div className="col-4">
                     <div className="small text-muted">
-                      <div className="fw-semibold">Leaderboards</div>
-                      <div>Compete globally</div>
+                      <div className="fw-semibold">Game History</div>
+                      <div>View past games</div>
                     </div>
                   </div>
                 </div>

@@ -14,7 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [selectedTheme, setSelectedTheme] = useState('university');
+  const [selectedTheme, setSelectedTheme] = useState('travel');
   const [loading, setLoading] = useState(true);
 
   // Check if user is logged in on app start
@@ -24,9 +24,14 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('user');
       const savedTheme = localStorage.getItem('selectedTheme');
       
-      // Set theme first
-      if (savedTheme) {
+      // Set theme first - ensure it's a valid active theme for non-logged users
+      const validPublicThemes = ['travel']; // Only themes that are active and don't require login
+      if (savedTheme && validPublicThemes.includes(savedTheme)) {
         setSelectedTheme(savedTheme);
+      } else {
+        // Default to travel theme if no valid theme is saved
+        setSelectedTheme('travel');
+        localStorage.setItem('selectedTheme', 'travel');
       }
 
       // Check if we have local auth data
@@ -74,10 +79,10 @@ export const AuthProvider = ({ children }) => {
     // Clear local state and storage
     setIsLoggedIn(false);
     setUser(null);
-    setSelectedTheme('university'); // Reset to default theme on logout
+          setSelectedTheme('travel'); // Reset to default theme on logout
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('user');
-    localStorage.setItem('selectedTheme', 'university');
+          localStorage.setItem('selectedTheme', 'travel');
   };
 
   const selectTheme = (themeId) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Target, Timer, AlertTriangle, Clock, User } from 'lucide-react';
+import { ArrowLeft, Target, Timer, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import API from '../services/api.mjs';
@@ -91,24 +91,15 @@ const Game = () => {
   // Initialize game data
   useEffect(() => {
     const initializeGame = async () => {
-      console.log('🎮 Game initialization started');
-      console.log('gameSession from navigation:', gameSession);
-      console.log('isLoggedIn:', isLoggedIn);
-      
       // Always check for active game first (for resume functionality)
       if (isLoggedIn) {
-        console.log('🔍 Checking for active game session...');
         try {
           const activeGameResult = await API.game.getActiveGame();
-          console.log('Active game API result:', activeGameResult);
           
           if (activeGameResult.success && activeGameResult.data) {
-            console.log('✅ Found active game session, resuming...');
             // Resume the active game (ignoring navigation state)
             await resumeActiveGame(activeGameResult.data);
             return;
-          } else {
-            console.log('ℹ️ No active game found, will use navigation state or redirect');
           }
         } catch (error) {
           console.error('❌ Error checking for active game:', error);
@@ -117,12 +108,9 @@ const Game = () => {
 
       // If no active game to resume, check if we have gameSession from navigation
       if (!gameSession) {
-        console.log('❌ No gameSession from navigation and no active game, redirecting to themes');
         navigate('/themes');
         return;
       }
-
-      console.log('✅ Have gameSession from navigation, initializing new game...');
       // Initialize new game from navigation state
       try {
         // Get starting cards from the game session
@@ -133,7 +121,6 @@ const Game = () => {
             bad_luck_severity: card.bad_luck_severity || card.severity,
             severity: card.severity || card.bad_luck_severity
           }));
-          console.log('Initial player cards:', normalizedCards);
           setPlayerCards(normalizedCards);
         }
 
@@ -162,7 +149,6 @@ const Game = () => {
     };
 
     const resumeActiveGame = async (activeSession) => {
-      console.log('🔄 Starting active game resume...');
       try {
         setGameState(prev => ({
           ...prev,
@@ -170,44 +156,33 @@ const Game = () => {
           loading: true
         }));
 
-        console.log('📊 Getting session details for ID:', activeSession.id);
         // Get the game session details
         const sessionResult = await API.game.getGameSession(activeSession.id);
-        console.log('Session details result:', sessionResult);
         
         if (!sessionResult.success) {
           throw new Error('Failed to get session details');
         }
 
         const session = sessionResult.data;
-        console.log('📋 Session data:', session);
         
-        console.log('🎲 Getting game rounds...');
         // Get all completed rounds to reconstruct game state
         const roundsResult = await API.game.getGameRounds(activeSession.id);
-        console.log('Rounds result:', roundsResult);
         
         if (!roundsResult.success) {
           throw new Error('Failed to get game rounds');
         }
 
         const rounds = roundsResult.data;
-        console.log('📝 All rounds:', rounds);
         
         // Separate starting cards (round 0) from gameplay rounds
         const startingRounds = rounds.filter(r => r.round_number === 0);
         const gameplayRounds = rounds.filter(r => r.round_number > 0);
-        
-        console.log('🏁 Starting rounds:', startingRounds);
-        console.log('🎯 Gameplay rounds:', gameplayRounds);
         
         // Calculate current game state
         const cardsWon = gameplayRounds.filter(r => r.is_correct).length;
         const wrongGuesses = gameplayRounds.filter(r => !r.is_correct).length;
         // Use the current_round from the database session, not calculated
         const currentRound = session.current_round;
-        
-        console.log('📊 Game state - Won:', cardsWon, 'Wrong:', wrongGuesses, 'Current Round:', currentRound);
 
         // Build player cards array (starting cards + won cards in order)
         const playerCardsArray = [];
@@ -234,21 +209,16 @@ const Game = () => {
           });
         }
 
-        console.log('🃏 Rebuilt player cards:', playerCardsArray);
         setPlayerCards(playerCardsArray);
 
         // Get next card to place (if game isn't over)
         if (cardsWon < 3 && wrongGuesses < 3) {
-          console.log('🎴 Getting next card to place...');
           const nextCardResult = await API.game.getNextCard(activeSession.id);
-          console.log('Next card result:', nextCardResult);
           if (nextCardResult.success) {
             setCurrentCard(nextCardResult.data);
-            console.log('🎴 Next card set:', nextCardResult.data);
             
             // Use persistent timer from server
             const remainingTime = nextCardResult.data.remaining_time || 30;
-            console.log('⏰ Setting persistent timer to:', remainingTime);
             setGameState(prev => ({
               ...prev,
               timeLeft: remainingTime
@@ -287,7 +257,7 @@ const Game = () => {
           setShowGameCompletion(true);
         }
 
-        console.log(`✅ Successfully resumed game: Round ${currentRound}, Won: ${cardsWon}, Wrong: ${wrongGuesses}`);
+
         
       } catch (error) {
         console.error('❌ Error resuming active game:', error);
@@ -328,7 +298,6 @@ const Game = () => {
 
   const submitMove = async (position, isTimeout = false) => {
     if (gameState.isCompleted) {
-      console.log('Game session is already completed, skipping move submission');
       return;
     }
 
@@ -611,16 +580,6 @@ const Game = () => {
             </div>
             
             <div className="col-md-2 text-end">
-              {isLoggedIn && (
-                <button 
-                  className="btn d-flex align-items-center justify-content-end p-1 border-0 bg-transparent"
-                  onClick={() => navigate('/profile')}
-                  style={{color: isDark ? 'white' : '#1a1a1a', fontWeight: '500', fontFamily: 'Poppins, sans-serif', fontSize: '14px'}}
-                >
-                  <User size={16} className="me-1" style={{color: isDark ? 'white' : '#1a1a1a'}} />
-                  Profile
-                </button>
-              )}
             </div>
           </div>
         </div>

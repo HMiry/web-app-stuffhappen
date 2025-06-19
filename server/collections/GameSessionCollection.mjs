@@ -1,6 +1,6 @@
 import db from '../db/database.mjs';
 
-// Create new game session
+// Create new game session 
 export const createGameSession = (userId, themeId) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -19,7 +19,7 @@ export const createGameSession = (userId, themeId) => {
   });
 };
 
-// Get game session by ID
+// Get game session by ID 
 export const getGameSession = (sessionId) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -41,7 +41,7 @@ export const getGameSession = (sessionId) => {
   });
 };
 
-// Get active game session for user
+// Get active game session for user 
 export const getActiveGameSession = (userId) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -63,7 +63,7 @@ export const getActiveGameSession = (userId) => {
   });
 };
 
-// Update game session
+// Update game session 
 export const updateGameSession = (sessionId, updates) => {
   return new Promise((resolve, reject) => {
     const allowedFields = ['current_round', 'current_round_start_time', 'cards_won', 'wrong_guesses', 'final_score', 'status', 'game_result', 'time_finished'];
@@ -95,7 +95,7 @@ export const updateGameSession = (sessionId, updates) => {
   });
 };
 
-// Add game round
+// Add game round 
 export const addGameRound = (sessionId, roundData) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -123,7 +123,7 @@ export const addGameRound = (sessionId, roundData) => {
   });
 };
 
-// Get game rounds for a session
+// Get game rounds for a session 
 export const getGameRounds = (sessionId) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -144,7 +144,7 @@ export const getGameRounds = (sessionId) => {
   });
 };
 
-// Get user's game history
+// Get user's game history 
 export const getUserGameHistory = (userId, limit = 10) => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -169,7 +169,7 @@ export const getUserGameHistory = (userId, limit = 10) => {
   });
 };
 
-// Get detailed game history with rounds
+// Get detailed game history with rounds 
 export const getDetailedGameHistory = (userId, gameId) => {
   return new Promise((resolve, reject) => {
     const sessionSql = `
@@ -217,26 +217,3 @@ export const getDetailedGameHistory = (userId, gameId) => {
     });
   });
 };
-
-
-
-// End game session
-export const endGameSession = (sessionId, gameResult) => {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      UPDATE game_sessions 
-      SET status = 'completed', game_result = ?, time_finished = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
-    
-    db.run(sql, [gameResult, sessionId], function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(this.changes);
-      }
-    });
-  });
-};
-
- 

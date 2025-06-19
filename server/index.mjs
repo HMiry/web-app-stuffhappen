@@ -4,11 +4,12 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {check, validationResult} from 'express-validator';
-import {listUsers, getUser, authenticateUser, updateUser, deleteUser} from './collections/UserCollection.mjs';
-import {listGames, getGame, addGame, updateGameStatus, getGamesByCreator, joinGame, getGamePlayers} from './collections/GameCollection.mjs';
-import {listThemes, listActiveThemes, getTheme, getThemeByKey, getThemeCards, getRandomThemeCards, addTheme, updateTheme, deleteTheme, getThemeStats} from './collections/ThemeCollection.mjs';
-import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory, endGameSession} from './collections/GameSessionCollection.mjs';
-import {listCards, getCard, getRandomCards, getCardsByIndexRange, getSimilarCards, getCardCount} from './collections/CardCollection.mjs';
+// CLEANED UP IMPORTS - Only importing functions that are actually used
+import {getUser, authenticateUser, updateUser} from './collections/UserCollection.mjs';
+// import {listGames, getGame, addGame, updateGameStatus, getGamesByCreator, joinGame, getGamePlayers} from './collections/GameCollection.mjs'; // COMMENTED OUT - ENTIRE FILE UNUSED
+import {listThemes, listActiveThemes, getThemeByKey, getThemeCards, getRandomThemeCards} from './collections/ThemeCollection.mjs';
+import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory} from './collections/GameSessionCollection.mjs';
+import {getCard} from './collections/CardCollection.mjs';
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import session from 'express-session';

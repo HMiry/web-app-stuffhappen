@@ -137,15 +137,14 @@ const seedDatabase = () => {
             
             const stmt = db.prepare(`
               INSERT OR IGNORE INTO users 
-              (username, email, password_hash, salt, name, role) 
-              VALUES (?, ?, ?, ?, ?, ?)
+              (username, email, password_hash, name, role) 
+              VALUES (?, ?, ?, ?, ?)
             `);
 
             stmt.run([
               user.username, 
               user.email, 
               hashedPassword,
-              '', // No separate salt needed with bcrypt
               user.name, 
               user.role
             ], function(err) {
