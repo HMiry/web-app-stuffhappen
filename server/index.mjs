@@ -687,17 +687,17 @@ app.delete('/api/users/:id/history', isLoggedIn, async (req, res) => {
   }
 });
 
-// Catch-all route for React Router (must be last!)
-app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, '../client/dist/index.html'));
-});
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString()
   });
+});
+
+// Catch-all route for React Router (must be last!)
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, '../client/dist/index.html'));
 });
 
 // Initialize database and start server
