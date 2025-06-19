@@ -465,12 +465,8 @@ const Game = () => {
                     
                     if (newWrongGuesses >= 3) {
                       // Game over - too many wrong guesses
+                      // Server already marked game as completed in submitMove response
                       setGameState(prev => ({ ...prev, isCompleted: true }));
-                      try {
-                        await API.game.endGame(gameState.sessionId, { game_result: 'lost' });
-                      } catch (error) {
-                        console.error('Error ending lost game:', error);
-                      }
                       // Show game completion message
                       setGameCompletionMessage({
                         type: 'lost',
@@ -481,12 +477,8 @@ const Game = () => {
                       setShowGameCompletion(true);
                     } else if (newCardsWon >= 3) {
                       // Game won - got 6 total cards (3 starting + 3 won)
+                      // Server already marked game as completed in submitMove response
                       setGameState(prev => ({ ...prev, isCompleted: true }));
-                      try {
-                        await API.game.endGame(gameState.sessionId, { game_result: 'won' });
-                      } catch (error) {
-                        console.error('Error ending won game:', error);
-                      }
                       // Show game completion message
                       setGameCompletionMessage({
                         type: 'won',

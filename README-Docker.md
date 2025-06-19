@@ -7,9 +7,6 @@ Simple commands to run the application using Docker.
 ```bash
 # Start everything
 docker-compose up -d
-
-# Add sample data
-docker-compose exec server npm run db:seed
 ```
 
 **Access:**
@@ -26,6 +23,12 @@ docker-compose down
 
 ```bash
 docker-compose logs -f
+```
+## Alternative: Run with Live Logs
+
+```bash
+# Run in foreground to see logs directly
+docker-compose up
 ```
 
 That's it! The database is automatically created when starting. 

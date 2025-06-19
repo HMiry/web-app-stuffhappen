@@ -30,15 +30,15 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:3001'], // Support both dev and prod
+  origin: ['http://localhost:5173'], // React dev server only (two-server pattern)
   optionsSuccessState: 200,
   credentials: true
 };
 
 app.use(cors(corsOptions));
 
-// Serve static files from React build
-app.use(express.static(join(__dirname, '../client/dist')));
+// Two-server pattern: Express serves only API endpoints
+// React dev server runs separately on port 5173
 
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
   const user = await authenticateUser(username, password);
@@ -769,10 +769,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Catch-all route for React Router (must be last!)
-app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, '../client/dist/index.html'));
-});
+// No catch-all route needed in two-server pattern
+// React dev server handles all frontend routes
 
 // Initialize database and start server
 const startServer = async () => {
@@ -783,13 +781,8 @@ const startServer = async () => {
     console.log('🎮 Database ready!');
     
     app.listen(port, () => { 
-      console.log(`🚀 API server started at http://localhost:${port}`); 
-      console.log('📋 Available endpoints:');
-      console.log('  - GET /api/themes - Get all active themes');
-      console.log('  - POST /api/game-sessions - Start a new game');
-      console.log('  - GET /api/users/:id/history - Get user game history');
-
-      console.log('  - POST /api/sessions - Login');
+      console.log(`🚀 Server running on http://localhost:${port}`); 
+      console.log('✅ Backend is working!');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
