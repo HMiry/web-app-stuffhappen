@@ -4,17 +4,17 @@
 
 ## Application Setup
 
-### Method 1: Traditional Setup (Required for Exam)
+### Method 1: Traditional Setup (Required By You)
 ```bash
 # Install dependencies
 cd server && npm install
 cd ../client && npm install
 
 # Development mode (two servers)
-cd server && nodemon index.mjs    # Terminal 1 - API + Static files
-cd client && npm run dev          # Terminal 2 - Dev server 
+cd server && nodemon index.mjs    # Terminal 1 - API server
+cd client && npm run dev          # Terminal 2 - React dev server
 ```
-Access at: http://localhost:3001 (Express serves everything)
+Access at: http://localhost:5173 (React dev server with API proxy)
 
 ### Method 2: Docker Setup (Optional)
 ```bash
@@ -87,10 +87,10 @@ Access at: http://localhost:5173 (Nginx + Express)
 
 ## Database Tables
 
-- Table `users` - contains user authentication (username, email, password_hash) and basic info (name)
+- Table `users` - contains user authentication (username, email, password_hash) and basic info (name, created_at, updated_at)
 - Table `themes` - contains game themes (theme_key, name, description, icon, color, background_image, category, difficulty_level, is_active, requires_login)
-- Table `cards` - contains disaster cards (theme_id, title, description, bad_luck_severity, image_url)
-- Table `game_sessions` - contains game session tracking (user_id, theme_id, status, current_round, current_round_start_time, cards_won, wrong_guesses, final_score, game_result, time_started, time_finished)
+- Table `cards` - contains disaster cards (theme_id, title, image_url, bad_luck_severity)
+- Table `game_sessions` - contains game session tracking (user_id, theme_id, status, total_rounds, current_round, current_round_start_time, cards_won, wrong_guesses, max_wrong_guesses, final_score, time_started, time_finished, game_result)
 - Table `game_rounds` - contains detailed round data (game_session_id, round_number, card_id, user_choice_position, correct_position, is_correct, time_taken, points_earned)
 
 ## Main React Components
@@ -116,7 +116,7 @@ Access at: http://localhost:5173 (Nginx + Express)
 
 ## Users Credentials
 
-- admin, admin123 
-- hojjat, hojjat123 
-- FulvioCorno, fulviocorno123 
-- FrancescaRusso, francescarusso123 
+- Username: admin, Password: admin123 
+- Username: hojjat, Password: hojjat123 
+- Username: FulvioCorno, Password: fulviocorno123 
+- Username: FrancescaRusso, Password: francescarusso123 

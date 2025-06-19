@@ -5,7 +5,7 @@ export const listThemes = () => {
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT id, theme_key, name, description, icon, color, background_image, 
-             category, difficulty_level, is_active, requires_login, created_at
+             category, difficulty_level, is_active, requires_login
       FROM themes 
       ORDER BY id ASC
     `;
@@ -25,7 +25,7 @@ export const listActiveThemes = () => {
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT id, theme_key, name, description, icon, color, background_image, 
-             category, difficulty_level, is_active, requires_login, created_at
+             category, difficulty_level, is_active, requires_login
       FROM themes 
       WHERE is_active = 1
       ORDER BY id ASC
@@ -46,7 +46,7 @@ export const getThemeByKey = (themeKey) => {
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT id, theme_key, name, description, icon, color, background_image, 
-             category, difficulty_level, is_active, requires_login, created_at
+             category, difficulty_level, is_active, requires_login
       FROM themes 
       WHERE theme_key = ?
     `;
@@ -67,7 +67,7 @@ export const getThemeByKey = (themeKey) => {
 export const getThemeCards = (themeId, limit = null) => {
   return new Promise((resolve, reject) => {
     let sql = `
-      SELECT id, theme_id, title, description, image_url, bad_luck_severity, created_at
+      SELECT id, theme_id, title, image_url, bad_luck_severity
       FROM cards 
       WHERE theme_id = ?
       ORDER BY bad_luck_severity ASC
@@ -93,7 +93,7 @@ export const getThemeCards = (themeId, limit = null) => {
 export const getRandomThemeCards = (themeId, count = 6) => {
   return new Promise((resolve, reject) => {
     const sql = `
-      SELECT id, theme_id, title, description, image_url, bad_luck_severity, created_at
+      SELECT id, theme_id, title, image_url, bad_luck_severity
       FROM cards 
       WHERE theme_id = ?
       ORDER BY RANDOM()

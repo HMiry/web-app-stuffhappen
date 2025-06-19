@@ -93,29 +93,25 @@ const seedDatabase = () => {
         username: 'admin',
         email: 'info@stuffhappens.com',
         password: 'admin123',
-        name: 'Admin User',
-        role: 'admin'
+        name: 'Admin User'
       },
       {
         username: 'hojjat',
         email: 'hojjat@test.com', 
         password: 'hojjat123',
-        name: 'Hojjat',
-        role: 'user'
+        name: 'Hojjat'
       },
       {
         username: 'FulvioCorno',
         email: 'fulviocorno@test.com',
         password: 'fulviocorno123',
-        name: 'Fulvio Corno',
-        role: 'user'
+        name: 'Fulvio Corno'
       },
       {
         username: 'FrancescaRusso',
         email: 'francescarusso@test.com',
         password: 'francescarusso123', 
-        name: 'Francesca Russo',
-        role: 'user'
+        name: 'Francesca Russo'
       }
     ];
 
@@ -137,16 +133,15 @@ const seedDatabase = () => {
             
             const stmt = db.prepare(`
               INSERT OR IGNORE INTO users 
-              (username, email, password_hash, name, role) 
-              VALUES (?, ?, ?, ?, ?)
+              (username, email, password_hash, name) 
+              VALUES (?, ?, ?, ?)
             `);
 
             stmt.run([
               user.username, 
               user.email, 
               hashedPassword,
-              user.name, 
-              user.role
+              user.name
             ], function(err) {
               if (err) {
                 reject(err);

@@ -445,7 +445,6 @@ app.get('/api/game-sessions/:id/next-card', async (req, res) => {
         return res.json({
           id: randomCard.id,
           title: randomCard.title,
-          description: randomCard.description,
           image_url: randomCard.image_url,
           theme_id: randomCard.theme_id,
           demo: true,
@@ -502,7 +501,6 @@ app.get('/api/game-sessions/:id/next-card', async (req, res) => {
     res.json({
       id: nextCard.id,
       title: nextCard.title,
-      description: nextCard.description,
       image_url: nextCard.image_url,
       theme_id: nextCard.theme_id,
       demo: session.user_id === null, // Mark as demo if no user

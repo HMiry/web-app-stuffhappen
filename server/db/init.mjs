@@ -12,7 +12,6 @@ const initDatabase = () => {
         email VARCHAR(100) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         name VARCHAR(100),
-        role VARCHAR(20) DEFAULT 'user',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -35,9 +34,7 @@ const initDatabase = () => {
         category VARCHAR(50),
         difficulty_level INTEGER DEFAULT 1,
         is_active BOOLEAN DEFAULT 1,
-        requires_login BOOLEAN DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        requires_login BOOLEAN DEFAULT 0
       )
       `, (err) => {
         if (err) {
@@ -51,10 +48,8 @@ const initDatabase = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         theme_id INTEGER NOT NULL,
         title VARCHAR(200) NOT NULL,
-        description TEXT,
         image_url VARCHAR(255),
         bad_luck_severity DECIMAL(5,2) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (theme_id) REFERENCES themes(id)
       )
         `, (err) => {
@@ -101,7 +96,6 @@ const initDatabase = () => {
         is_correct BOOLEAN DEFAULT 0,
         time_taken INTEGER,
         points_earned INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (game_session_id) REFERENCES game_sessions(id),
         FOREIGN KEY (card_id) REFERENCES cards(id)
       )
