@@ -75,7 +75,15 @@ const Themes = () => {
     try {
       const result = await API.game.startGame(selectedTheme);
       if (result.success) {
-        navigate('/game', { state: { gameSession: result.data } });
+        // Check if this is a resumed game
+        if (result.data.resumed) {
+          // Show a brief message about resuming, then navigate
+          setError(null); // Clear any previous errors
+          navigate('/game', { state: { gameSession: result.data, resumed: true } });
+        } else {
+          // New game started normally
+          navigate('/game', { state: { gameSession: result.data } });
+        }
       } else {
         setError(result.error || 'Failed to start game');
       }

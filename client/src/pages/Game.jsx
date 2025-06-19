@@ -88,10 +88,24 @@ const Game = () => {
   const [gameCompletionMessage, setGameCompletionMessage] = useState(null); // Final game completion message
   const [showGameCompletion, setShowGameCompletion] = useState(false);
 
-  // Initialize game data
+  // Initialize game data this is added as optional so that users can resume a game from the themes page
   useEffect(() => {
     const initializeGame = async () => {
-      // Always check for active game first (for resume functionality)
+      // Check if we came from "Start Playing" button with a resumed session
+      if (gameSession?.resumed) {
+        // This is a resumed session from the themes page
+        await resumeActiveGame({
+          id: gameSession.session_id,
+          theme_id: gameSession.theme.id,
+          theme_name: gameSession.theme.name,
+          theme_key: gameSession.theme.theme_key,
+          theme_color: gameSession.theme.color,
+          ...gameSession.game_state
+        });
+        return;
+      }
+
+      // Always check for active game first (for resume functionality when navigating directly)
       if (isLoggedIn) {
         try {
           const activeGameResult = await API.game.getActiveGame();

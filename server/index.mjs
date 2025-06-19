@@ -37,9 +37,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Two-server pattern: Express serves only API endpoints
-// React dev server runs separately on port 5173
-
 passport.use(new LocalStrategy(async function verify(username, password, cb) {
   const user = await authenticateUser(username, password);
   if(!user || user.error)
@@ -277,8 +274,49 @@ app.post('/api/game-sessions', async (req, res) => {
       return;
     }
 
-    // For logged-in users: create database session
+    // For logged-in users: check for existing active session first
+    // I know it was optional but I added it to resume a game from the themes page
     const userId = req.user.id;
+    
+    // Check if user already has an active game session
+    const existingActiveSession = await getActiveGameSession(userId);
+    if (existingActiveSession) {
+      // User has an active game - return it instead of creating new one
+      const existingRounds = await getGameRounds(existingActiveSession.id);
+      const startingCards = existingRounds
+        .filter(r => r.round_number === 0)
+        .sort((a, b) => a.user_choice_position - b.user_choice_position)
+        .map(r => ({
+          id: r.card_id,
+          title: r.card_title,
+          bad_luck_severity: r.bad_luck_severity,
+          image_url: r.card_image_url
+        }));
+      
+      return res.status(200).json({
+        session_id: existingActiveSession.id,
+        theme: {
+          id: existingActiveSession.theme_id,
+          name: existingActiveSession.theme_name,
+          theme_key: existingActiveSession.theme_key,
+          color: existingActiveSession.theme_color
+        },
+        cards: startingCards,
+        demo: false,
+        max_rounds: 6,
+        starting_hand: false, // Not a new game
+        resumed: true, // Flag to indicate this is a resumed game
+        message: `Resuming your ${existingActiveSession.theme_name} game in progress...`,
+        game_state: {
+          current_round: existingActiveSession.current_round,
+          cards_won: existingActiveSession.cards_won,
+          wrong_guesses: existingActiveSession.wrong_guesses,
+          final_score: existingActiveSession.final_score
+        }
+      });
+    }
+    
+    // No active session found - create new one
     const sessionId = await createGameSession(userId, theme.id);
     
     // Get 3 random starting cards and sort by severity (low to high)

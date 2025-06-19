@@ -12,7 +12,7 @@ cd ../client && npm install
 
 # Development mode (two servers)
 cd server && nodemon index.mjs    # Terminal 1 - API + Static files
-cd client && npm run dev          # Terminal 2 - Dev server (optional)
+cd client && npm run dev          # Terminal 2 - Dev server 
 ```
 Access at: http://localhost:3001 (Express serves everything)
 
