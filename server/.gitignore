@@ -29,8 +29,8 @@ build/
 .env.test
 
 # Database files
-*.sqlite
-*.sqlite3
+# *.sqlite      # Comment out so database is included  
+# *.sqlite3     # Comment out so database is included
 # server/db/*.db    # Comment out so database is included
 # server/db/*.sqlite*   # Comment out so database is included
 

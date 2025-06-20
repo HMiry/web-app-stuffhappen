@@ -117,8 +117,9 @@ const Themes = () => {
                 className="d-flex align-items-center px-3 py-1 shadow-sm"
                 style={{
                   backgroundColor: 'transparent',
-                  color: isDark ? 'white' : '#1a1a1a',
-                  border: isDark ? '1px solid white' : '1px solid #1a1a1a',
+                  color: '#4A90E2',
+                  borderColor: '#4A90E2',
+                  border: '1px solid #4A90E2',
                   borderRadius: '20px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '500',
@@ -129,12 +130,12 @@ const Themes = () => {
                 }}
                 onClick={() => navigate('/')}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = isDark ? 'white' : '#1a1a1a';
-                  e.currentTarget.style.color = isDark ? 'black' : 'white';
+                  e.currentTarget.style.backgroundColor = '#4A90E2';
+                  e.currentTarget.style.color = '#ffffff';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = isDark ? 'white' : '#1a1a1a';
+                  e.currentTarget.style.color = '#4A90E2';
                 }}
               >
                 <ArrowLeft className="me-1" size={16} />
