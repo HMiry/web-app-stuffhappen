@@ -1,5 +1,5 @@
 import sqlite3 from 'sqlite3';
-import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import db from '../db/database.mjs';
 
 /** USERS **/
@@ -38,11 +38,11 @@ export const updateUser = (userId, user) => {
   });
 }
 
-// authenticate user (simplified)
+// authenticate user using scrypt (professor's approach)
 export const authenticateUser = async (username, password) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const sql = 'SELECT * FROM users WHERE username = ?';
-    db.get(sql, [username], async (err, row) => {
+    db.get(sql, [username], (err, row) => {
       if (err) { 
         reject(err); 
       }
@@ -50,19 +50,19 @@ export const authenticateUser = async (username, password) => {
         resolve({ error: 'USER_NOT_FOUND', message: 'User not found' });
       }
       else {
-        try {
         const user = {id: row.id, username: row.username, email: row.email, name: row.name};
         
-          // Compare password with bcrypt
-          const isValid = await bcrypt.compare(password, row.password_hash);
-          if (!isValid) {
-            resolve({ error: 'WRONG_PASSWORD', message: 'Incorrect password' });
+        crypto.scrypt(password, row.salt, 16, function(err, hashedPassword) {
+          if (err) {
+            reject(err);
           } else {
-            resolve(user);
+            if(!crypto.timingSafeEqual(Buffer.from(row.password_hash, 'hex'), hashedPassword)) {
+              resolve({ error: 'WRONG_PASSWORD', message: 'Incorrect password' });
+            } else {
+              resolve(user);
+            }
           }
-        } catch (error) {
-          reject(error);
-        }
+        });
       }
     });
   });

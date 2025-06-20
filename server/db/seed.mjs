@@ -1,5 +1,5 @@
 import db from './database.mjs';
-import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const seedDatabase = () => {
   return new Promise((resolve, reject) => {
@@ -128,34 +128,42 @@ const seedDatabase = () => {
 
         users.forEach(async (user, index) => {
           try {
-            // Hash password with bcrypt
-            const hashedPassword = await bcrypt.hash(user.password, 10);
+            // Generate salt and hash password with scrypt
+            const salt = crypto.randomBytes(16).toString('hex');
             
-            const stmt = db.prepare(`
-              INSERT OR IGNORE INTO users 
-              (username, email, password_hash, name) 
-              VALUES (?, ?, ?, ?)
-            `);
-
-            stmt.run([
-              user.username, 
-              user.email, 
-              hashedPassword,
-              user.name
-            ], function(err) {
+            crypto.scrypt(user.password, salt, 16, function(err, hashedPassword) {
               if (err) {
                 reject(err);
                 return;
               }
               
-              completed++;
-              if (completed === total) {
-                console.log(`✅ Inserted ${total} users`);
-                resolve();
-              }
-            });
+              const stmt = db.prepare(`
+                INSERT OR IGNORE INTO users 
+                (username, email, password_hash, salt, name) 
+                VALUES (?, ?, ?, ?, ?)
+              `);
 
-            stmt.finalize();
+              stmt.run([
+                user.username, 
+                user.email, 
+                hashedPassword.toString('hex'),
+                salt,
+                user.name
+              ], function(err) {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+                
+                completed++;
+                if (completed === total) {
+                  console.log(`✅ Inserted ${total} users`);
+                  resolve();
+                }
+              });
+
+              stmt.finalize();
+            });
           } catch (error) {
             reject(error);
           }
