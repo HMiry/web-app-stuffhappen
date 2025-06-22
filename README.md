@@ -87,11 +87,20 @@ Access at: http://localhost:5173 (Nginx + Express)
 
 ## Database Tables
 
-- Table `users` - contains user authentication (username, email, password_hash) and basic info (name, created_at, updated_at)
-- Table `themes` - contains game themes (theme_key, name, description, icon, color, background_image, category, difficulty_level, is_active, requires_login)
-- Table `cards` - contains disaster cards (theme_id, title, image_url, bad_luck_severity)
-- Table `game_sessions` - contains game session tracking (user_id, theme_id, status, total_rounds, current_round, current_round_start_time, cards_won, wrong_guesses, max_wrong_guesses, final_score, time_started, time_finished, game_result)
-- Table `game_rounds` - contains detailed round data (game_session_id, round_number, card_id, user_choice_position, correct_position, is_correct, time_taken, points_earned)
+- Table `users` - contains all user data:
+  - `id` (PRIMARY KEY), `username`, `email`, `password_hash`, `salt`, `name`, `created_at`, `updated_at`
+
+- Table `themes` - contains game theme definitions:
+  - `id` (PRIMARY KEY), `theme_key`, `name`, `description`, `icon`, `color`, `background_image`, `category`, `difficulty_level`, `is_active`, `requires_login`
+
+- Table `cards` - contains disaster cards for each theme:
+  - `id` (PRIMARY KEY), `theme_id` (references themes.id), `title`, `image_url`, `bad_luck_severity`
+
+- Table `game_sessions` - contains game session tracking:
+  - `id` (PRIMARY KEY), `user_id` (references users.id), `theme_id` (references themes.id), `status`, `total_rounds`, `current_round`, `current_round_start_time`, `cards_won`, `wrong_guesses`, `max_wrong_guesses`, `final_score`, `time_started`, `time_finished`, `game_result`
+
+- Table `game_rounds` - contains detailed round-by-round game data:
+  - `id` (PRIMARY KEY), `game_session_id` (references game_sessions.id), `round_number`, `card_id` (references cards.id), `user_choice_position`, `correct_position`, `is_correct`, `time_taken`, `points_earned`
 
 ## Main React Components
 
