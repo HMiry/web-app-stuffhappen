@@ -52,7 +52,7 @@ const Themes = () => {
           setError(result.error || 'Failed to load themes');
         }
       } catch (error) {
-        console.error('Error fetching themes:', error);
+
         setError('Network error. Please try again.');
       } finally {
         setLoading(false);
@@ -88,7 +88,7 @@ const Themes = () => {
         setError(result.error || 'Failed to start game');
       }
     } catch (error) {
-      console.error('Error starting game:', error);
+
       setError('Failed to start game. Please try again.');
     }
   };

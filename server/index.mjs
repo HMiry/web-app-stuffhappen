@@ -784,10 +784,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
-// No catch-all route needed in two-server pattern
-// React dev server handles all frontend routes
-
 // Initialize database and start server
 const startServer = async () => {
   try {

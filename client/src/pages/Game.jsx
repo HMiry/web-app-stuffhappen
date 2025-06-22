@@ -116,7 +116,6 @@ const Game = () => {
             return;
           }
         } catch (error) {
-          console.error('❌ Error checking for active game:', error);
         }
       }
 
@@ -157,7 +156,7 @@ const Game = () => {
           loading: false
         }));
       } catch (error) {
-        console.error('Error initializing game:', error);
+
         navigate('/themes');
       }
     };
@@ -274,7 +273,7 @@ const Game = () => {
 
         
       } catch (error) {
-        console.error('❌ Error resuming active game:', error);
+
         navigate('/themes');
       }
     };
@@ -386,14 +385,14 @@ const Game = () => {
         // Note: Removed setTimeout - users now click OK button to continue
 
       } else {
-        console.error('Failed to submit move:', result.error);
+
         if (result.error === 'Game session is already completed') {
           setGameState(prev => ({ ...prev, isCompleted: true }));
           navigate('/themes');
         }
       }
     } catch (error) {
-      console.error('Error submitting move:', error);
+
       if (error.message && error.message.includes('already completed')) {
         setGameState(prev => ({ ...prev, isCompleted: true }));
         navigate('/themes');

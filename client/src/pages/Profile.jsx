@@ -34,9 +34,9 @@ const Profile = () => {
         name: userInfo.name || user.name
       };
       
-      console.log('Updating profile with data:', updateData);
+
       const result = await API.user.updateProfile(user.id, updateData);
-      console.log('Update result:', result);
+
       
       if (result.success) {
         // Update successful - close modal
@@ -49,14 +49,14 @@ const Profile = () => {
         const updatedUser = { ...user, ...updateData };
         setUserInfo(updatedUser);
         
-        console.log('Profile updated successfully. New user data:', updatedUser);
+
       } else {
         // Show error message
-        console.error('Failed to update profile:', result.error);
+
         alert('Failed to update profile: ' + result.error);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+
       alert('Error updating profile. Please try again.');
     }
   };
@@ -93,11 +93,11 @@ const Profile = () => {
         alert('Game history cleared successfully!');
       } else {
         // Show error message
-        console.error('Failed to clear history:', result.error);
+
         alert('Failed to clear history: ' + result.error);
       }
     } catch (error) {
-      console.error('Error clearing history:', error);
+
       alert('Error clearing history. Please try again.');
     }
   };
@@ -160,7 +160,7 @@ const Profile = () => {
                 }
                 return null;
               } catch (error) {
-                console.error('Error fetching detailed game:', error);
+
                 return null;
               }
             })
@@ -170,7 +170,7 @@ const Profile = () => {
           setGameHistory(detailedGames.filter(game => game !== null));
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+
       } finally {
         setLoading(false);
       }

@@ -46,7 +46,7 @@ const Login = () => {
         setError(result.error || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
-      console.error('Login error:', error);
+
       // Only show network error for actual network issues
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         setError('Network error. Please check your connection and try again.');
@@ -139,6 +139,7 @@ const Login = () => {
                         placeholder="Enter your username"
                         value={formData.username}
                         onChange={handleChange}
+                        autoComplete="username"
                         required
                         style={{
                           borderColor: '#d1d5db',
@@ -175,6 +176,7 @@ const Login = () => {
                         placeholder="Enter your password"
                         value={formData.password}
                         onChange={handleChange}
+                        autoComplete="current-password"
                         required
                         style={{
                           borderColor: '#d1d5db',

@@ -49,7 +49,6 @@ export const AuthProvider = ({ children }) => {
             logout();
           }
         } catch (error) {
-          console.error('Session check failed:', error);
           // Clear invalid session data
           logout();
         }
@@ -73,7 +72,7 @@ export const AuthProvider = ({ children }) => {
       // Call API logout to clear server session
       await API.auth.logout();
     } catch (error) {
-      console.error('Logout API call failed:', error);
+
     }
     
     // Clear local state and storage
