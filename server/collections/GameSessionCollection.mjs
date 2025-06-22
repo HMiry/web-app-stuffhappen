@@ -225,3 +225,39 @@ export const getDetailedGameHistory = (userId, gameId) => {
     });
   });
 };
+
+// Clear user's game history (both rounds and sessions)
+export const clearUserGameHistory = (userId) => {
+  return new Promise((resolve, reject) => {
+    // First delete all game rounds for this user's sessions
+    const deleteRoundsSQL = `
+      DELETE FROM game_rounds 
+      WHERE game_session_id IN (
+        SELECT id FROM game_sessions WHERE user_id = ?
+      )
+    `;
+    
+    db.run(deleteRoundsSQL, [userId], function(err) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      const deletedRounds = this.changes;
+      
+      // Then delete all game sessions for this user
+      const deleteSessionsSQL = 'DELETE FROM game_sessions WHERE user_id = ?';
+      
+      db.run(deleteSessionsSQL, [userId], function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({
+            deleted_rounds: deletedRounds,
+            deleted_sessions: this.changes
+          });
+        }
+      });
+    });
+  });
+};

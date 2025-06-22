@@ -6,16 +6,15 @@ import { dirname, join } from 'path';
 import {check, validationResult} from 'express-validator';
 // CLEANED UP IMPORTS - Only importing functions that are actually used
 import {getUser, authenticateUser, updateUser} from './collections/UserCollection.mjs';
-// import {listGames, getGame, addGame, updateGameStatus, getGamesByCreator, joinGame, getGamePlayers} from './collections/GameCollection.mjs'; // COMMENTED OUT - ENTIRE FILE UNUSED
+
 import {listThemes, listActiveThemes, getThemeByKey, getThemeCards, getRandomThemeCards} from './collections/ThemeCollection.mjs';
-import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory} from './collections/GameSessionCollection.mjs';
+import {createGameSession, getGameSession, getActiveGameSession, updateGameSession, addGameRound, getGameRounds, getUserGameHistory, getDetailedGameHistory, clearUserGameHistory} from './collections/GameSessionCollection.mjs';
 import {getCard} from './collections/CardCollection.mjs';
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import session from 'express-session';
 
-// Import database
-import db from './db/database.mjs';
+// Import database initialization
 import initDatabase from './db/init.mjs';
 import seedDatabase from './db/seed.mjs';
 
@@ -729,7 +728,7 @@ app.post('/api/game-sessions/:id/rounds', [
 // 14.GET /api/users/:id/history
 app.get('/api/users/:id/history', async (req, res) => {
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 50;
     const history = await getUserGameHistory(req.params.id, limit);
     res.json(history);
   } catch(e) {
@@ -763,32 +762,13 @@ app.delete('/api/users/:id/history', isLoggedIn, async (req, res) => {
       return res.status(403).json({error: 'You can only delete your own game history'});
     }
 
-    // Delete game rounds for this user's sessions
-    await new Promise((resolve, reject) => {
-      const sql = `
-        DELETE FROM game_rounds 
-        WHERE game_session_id IN (
-          SELECT id FROM game_sessions WHERE user_id = ?
-        )
-      `;
-      db.run(sql, [userId], function(err) {
-        if (err) reject(err);
-        else resolve(this.changes);
-      });
-    });
-
-    // Delete game sessions for this user
-    const deletedSessions = await new Promise((resolve, reject) => {
-      const sql = 'DELETE FROM game_sessions WHERE user_id = ?';
-      db.run(sql, [userId], function(err) {
-        if (err) reject(err);
-        else resolve(this.changes);
-      });
-    });
+    // Use DAO method to clear user game history
+    const result = await clearUserGameHistory(userId);
 
     res.json({ 
       message: 'Game history cleared successfully',
-      deleted_sessions: deletedSessions,
+      deleted_rounds: result.deleted_rounds,
+      deleted_sessions: result.deleted_sessions,
       timestamp: new Date().toISOString()
     });
   } catch(e) {

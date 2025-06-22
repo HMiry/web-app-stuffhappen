@@ -131,7 +131,7 @@ const Profile = () => {
 
           // Fetch detailed history for each game (to get round results)
           const detailedGames = await Promise.all(
-            history.slice(0, 5).map(async (game) => {  // Limit to recent 5 games
+            history.map(async (game) => {  // Show all games
               try {
                 const detailedResult = await API.user.getDetailedHistory(user.id, game.id);
                 if (detailedResult.success) {
