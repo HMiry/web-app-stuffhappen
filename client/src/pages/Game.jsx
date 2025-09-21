@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Target, Timer, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import API from '../services/api.mjs';
 
-// Game Completion Popup Component
+// ========================================
+// LINE 9: GameCompletionPopup Component
+// ========================================
+// The "You won/lost" message that appears with a countdown when the game is over
 const GameCompletionPopup = ({ message, onComplete }) => {
   const [countdown, setCountdown] = useState(3);
   const { isDark } = useTheme();
@@ -61,6 +64,10 @@ const GameCompletionPopup = ({ message, onComplete }) => {
   );
 };
 
+// ========================================
+// LINE 59: Game Component (Main Component)
+// ========================================
+// This is the main part of your code. It manages all the logic for your game round-by-round
 const Game = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +76,10 @@ const Game = () => {
   // Get game session from navigation state
   const gameSession = location.state?.gameSession;
   
+  // ========================================
+  // LINE 69: Game State Handling
+  // ========================================
+  // Remembers things like: how many cards you have, how many you got wrong, what round it is, what card you're looking at, etc.
   const [gameState, setGameState] = useState({
     sessionId: gameSession?.session_id,
     cardsWon: 0,
@@ -87,6 +98,9 @@ const Game = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [gameCompletionMessage, setGameCompletionMessage] = useState(null); // Final game completion message
   const [showGameCompletion, setShowGameCompletion] = useState(false);
+
+  // Ref to track if timeout has been handled for current round (prevents double timeout)
+  const timeoutHandledRef = useRef(false);
 
   // Initialize game data this is added as optional so that users can resume a game from the themes page
   useEffect(() => {
@@ -155,6 +169,7 @@ const Game = () => {
           gameStarted: true,
           loading: false
         }));
+        timeoutHandledRef.current = false; // Reset timeout flag for new game
       } catch (error) {
 
         navigate('/themes');
@@ -250,6 +265,7 @@ const Game = () => {
           loading: false,
           isCompleted: (cardsWon >= 3 || wrongGuesses >= 3)
         }));
+        timeoutHandledRef.current = false; // Reset timeout flag for resumed game
 
         // If game is already completed, show completion message
         if (cardsWon >= 3) {
@@ -281,6 +297,10 @@ const Game = () => {
     initializeGame();
   }, [gameSession, navigate, isLoggedIn]);
 
+  // ========================================
+  // LINE 264: Timer (Countdown)
+  // ========================================
+  // A timer that counts down from 30 seconds for each round. If time runs out, it's treated as a wrong answer
   // Timer countdown
   useEffect(() => {
     let timer;
@@ -288,13 +308,18 @@ const Game = () => {
       timer = setTimeout(() => {
         setGameState(prev => ({ ...prev, timeLeft: prev.timeLeft - 1 }));
       }, 1000);
-    } else if (gameState.timeLeft === 0 && !showFeedback && !gameState.isCompleted) {
-      // Time's up - treat as wrong answer
+    } else if (gameState.timeLeft === 0 && !showFeedback && !gameState.isCompleted && !timeoutHandledRef.current) {
+      // Only handle timeout once per round
+      timeoutHandledRef.current = true; // Mark as handled
       handleTimeUp();
     }
     return () => clearTimeout(timer);
   }, [gameState.gameStarted, gameState.timeLeft, showFeedback, gameState.isCompleted]);
 
+  // ========================================
+  // LINE 278: Card Placement Slots Logic
+  // ========================================
+  // Shows the "Place Here" boxes between/around the cards. You click them to guess where the new card should go
   const handleSlotClick = async (slotIndex) => {
     if (!gameState.isCompleted && !showFeedback) {
       // Auto-submit the move immediately when slot is clicked
@@ -309,6 +334,10 @@ const Game = () => {
     await submitMove(1, true); // Any position, but marked as timeout
   };
 
+  // ========================================
+  // LINE 293: API Calls & Game Logic
+  // ========================================
+  // Talks to a backend/server: To get your game data, session, cards, rounds. To submit your answer (move). To get the next card, etc.
   const submitMove = async (position, isTimeout = false) => {
     if (gameState.isCompleted) {
       return;
@@ -400,6 +429,10 @@ const Game = () => {
     }
   };
 
+  // ========================================
+  // LINE 388: Loading and Error Screens
+  // ========================================
+  // Shows a loading spinner if data is being fetched. Shows an error screen if the game can't be loaded
   // Show loading state
   if (gameState.loading) {
     return (
@@ -430,6 +463,10 @@ const Game = () => {
 
   return (
     <div className="min-vh-100" style={{backgroundColor: isDark ? '#1a1a1a' : '#ffffff'}}>
+      {/* ========================================
+          LINE 417: Feedback Popup
+          ========================================
+          After you make a guess, a message pops up saying if you were correct or not (with big ✅ or ❌), and tells you the right spot */}
       {/* Feedback Overlay */}
       {showFeedback && feedback && (
         <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 2000}}>
@@ -506,6 +543,7 @@ const Game = () => {
                       if (nextCardResult.success) {
                         setCurrentCard(nextCardResult.data);
                         setGameState(prev => ({ ...prev, timeLeft: 30 }));
+                        timeoutHandledRef.current = false; // Reset timeout flag for new round
                       }
                     }
                   };
@@ -521,6 +559,10 @@ const Game = () => {
         </div>
       )}
 
+      {/* ========================================
+          LINE 507: Game Completion Logic
+          ========================================
+          Figures out when the game should end (win or lose), and shows the completion popup */}
       {/* Game Completion Overlay */}
       {showGameCompletion && gameCompletionMessage && (
         <GameCompletionPopup 
@@ -529,6 +571,10 @@ const Game = () => {
         />
       )}
 
+      {/* ========================================
+          LINE 517: Header Bar
+          ========================================
+          The top part with exit button, round number, total cards, and wrong guesses */}
       {/* Fixed Top Header */}
       <div className="position-fixed w-100" style={{top: 0, left: 0, zIndex: 1050, backgroundColor: isDark ? '#2a2a2a' : '#f8f9fa', borderBottom: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)'}}>
         <div className="container-fluid py-2">
@@ -594,6 +640,10 @@ const Game = () => {
       {/* Content with top padding to account for fixed header */}
       <div style={{paddingTop: '80px'}}>
         <div className="container py-4">
+        {/* ========================================
+            LINE 612: Current Card Display
+            ========================================
+            Shows the current disaster card you have to place */}
         {/* Current Question */}
         <div className="row mb-3">
           <div className="col-12">
@@ -650,6 +700,10 @@ const Game = () => {
           </div>
         </div>
 
+        {/* ========================================
+            LINE 667: Player Cards Display
+            ========================================
+            Shows the cards you already have, sorted by how "bad" (severe) they are */}
         {/* Your Disaster Cards */}
         <div className="row">
           <div className="col-12">
@@ -851,4 +905,4 @@ const Game = () => {
   );
 };
 
-export default Game; 
+export default Game;

@@ -59,7 +59,7 @@ const isLoggedIn = (req, res, next) => {
   return res.status(401).json({error: 'Not authorized'});
 }
 
-// Helper function to check authentication status with more details
+// Helper function to check authentication status with more details for session
 const checkAuth = (req) => {
   return {
     isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,

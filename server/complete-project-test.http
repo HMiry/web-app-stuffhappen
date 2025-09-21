@@ -73,7 +73,7 @@ Content-Type: {{contentType}}
 }
 
 ### 4.3 Get first card for demo game (use session_id from response above)
-@DEMO_SESSION_ID = 1
+@DEMO_SESSION_ID = demo
 GET {{baseUrl}}/api/game-sessions/{{DEMO_SESSION_ID}}/next-card
 
 ### 4.4 Submit demo round (demo only allows 1 round)
@@ -82,7 +82,7 @@ Content-Type: {{contentType}}
 
 {
   "round_number": 1,
-  "card_id": 65,
+  "card_id": 89,
   "user_choice_position": 2,
   "time_taken": 15
 }
@@ -115,7 +115,7 @@ Content-Type: {{contentType}}
 GET {{baseUrl}}/api/game-sessions/active
 
 ### 5.4 Get game session details (use session_id from response above)
-@GAME_SESSION_ID = 2
+@GAME_SESSION_ID = 24
 GET {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}
 
 ### 5.5 Get current rounds for the session
@@ -134,8 +134,8 @@ POST {{baseUrl}}/api/game-sessions/{{GAME_SESSION_ID}}/rounds
 Content-Type: {{contentType}}
 
 {
-  "round_number": 1,
-  "card_id": 18,
+  "round_number": 2,
+  "card_id": 97,
   "user_choice_position": 3,
   "time_taken": 12
 }
@@ -150,8 +150,8 @@ Content-Type: {{contentType}}
 
 {
   "round_number": 2,
-  "card_id": 28,
-  "user_choice_position": 4,
+  "card_id": 57,
+  "user_choice_position": 5,
   "time_taken": 8
 }
 
